@@ -1,8 +1,8 @@
 GROUPES_MUSCULAIRES = ["pectoraux", "dos", "jambes", "epaules", "bras", "abdos"]
 
-MUSCLES_CIBLES = ["portion superieure des pecs", "portion mediane des pecs", "portion inferieure des pecs", "trapeze", "grand dorsal", "grand rond", "triceps", "biceps", "deltoide antérieur", "deltoide supérieur", "deltoide médian", "ischios", "mollets", "fessier", "quadriceps", "adducteur"]
+MUSCLES_CIBLES = ["portion supérieure des pecs", "portion médiane des pecs", "portion inférieure des pecs", "trapèze", "grand dorsal", "grand rond", "triceps", "biceps", "deltoide antérieur", "deltoide postérieur", "deltoide médian", "ischios", "mollets", "fessier", "quadriceps", "adducteur"]
 
-MATERIELS = ["barre", "halteres", "machine", "poids_du_corps", "elastique"]
+MATERIELS = ["barre", "haltères", "machine", "poulie", "poids du corps", "élastique"]
 
 FOURCHETTE_SERIES_SEMAINE = {
     "pectoraux": (10, 15, 20),

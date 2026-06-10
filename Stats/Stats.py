@@ -80,3 +80,13 @@ def comparaison_nb_series_par_groupe_et_fourchette_scientifique(carnet):
             comparaison_fourchettes_scientifiques[(annee, semaine, groupe)] = {"nb_series": nb_series, "statut": statut}
     return comparaison_fourchettes_scientifiques
         
+def evolution_des_charges_dans_le_temps(carnet):
+    regroupement_record_poids_par_exercice_et_par_seance = defaultdict(list)
+    for seance in carnet.seances:
+        for exercice_realise in seance.exercices_realises:
+            record_local = 0.0
+            for serie in exercice_realise.series:
+                if serie.poids > record_local:
+                    record_local = serie.poids
+            regroupement_record_poids_par_exercice_et_par_seance[exercice_realise.exercice.nom].append((seance.date, record_local))
+    return {nom: sorted(liste) for nom, liste in regroupement_record_poids_par_exercice_et_par_seance.items()}
