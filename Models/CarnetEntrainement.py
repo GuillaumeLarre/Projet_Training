@@ -1,5 +1,6 @@
 import json
-from Models import Exercice, Seance
+from Models.Exercice import Exercice
+from Models.Seance import Seance
 
 
 class CarnetEntrainement:

@@ -2,6 +2,12 @@ from collections import defaultdict
 from datetime import datetime
 from Constantes.Constantes import FOURCHETTE_SERIES_SEMAINE
 
+def volume_total_par_groupe_musculaire_seance(seance):
+    volume_par_groupe_par_seance = defaultdict(float)
+    for exercices_realises in seance.exercices_realises:
+        for serie in exercices_realises.series:
+            volume_par_groupe_par_seance[exercices_realises.exercice.groupe_musculaire] += serie.poids * serie.reps
+    return volume_par_groupe_par_seance
 
 def volume_total_par_groupe_musculaire(carnet):
     volume_par_groupe = defaultdict(float)

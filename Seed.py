@@ -19,7 +19,6 @@ def creer_catalogue():
     muscle_cible=["portion médiane des pecs", "triceps", "deltoide antérieur"],
     type_materiel="haltères",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="DI01",
     nom="Développé incliné haltères",
@@ -27,7 +26,6 @@ def creer_catalogue():
     muscle_cible=["portion supérieure des pecs", "deltoide antérieur", "triceps"],
     type_materiel="haltères",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="EP01",
     nom="Écartés poulie sur banc incliné 45°",
@@ -35,7 +33,6 @@ def creer_catalogue():
     muscle_cible=["portion supérieure des pecs", "portion médiane des pecs"],
     type_materiel="poulie",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="CP01",
     nom="Curl pupitre machine",
@@ -43,7 +40,6 @@ def creer_catalogue():
     muscle_cible=["biceps"],
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="CU01",
     nom="Curl unilatéral poulie",
@@ -51,18 +47,16 @@ def creer_catalogue():
     muscle_cible=["biceps"],
     type_materiel="poulie",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="EL01",
-    nom="Élévations latérales haltères",
+    nom="Élévations latérales poulie",
     groupe_musculaire="epaules",
     muscle_cible=["deltoide médian"],
-    type_materiel="haltères",
+    type_materiel="poulie",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="EA01",
-    nom="Élévations arrière poulie au sol (à genoux)",
+    nom="Élévations arrière poulie au sol",
     groupe_musculaire="epaules",
     muscle_cible=["deltoide postérieur"],
     type_materiel="poulie",
@@ -74,7 +68,6 @@ def creer_catalogue():
     muscle_cible=["quadriceps"],
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="HS01",
     nom="Hack squat machine",
@@ -82,7 +75,6 @@ def creer_catalogue():
     muscle_cible=["quadriceps", "fessier", "ischios"],
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="PR01",
     nom="Presse inclinée 45°",
@@ -90,23 +82,20 @@ def creer_catalogue():
     muscle_cible=["quadriceps", "fessier", "ischios"],
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="LC01",
     nom="Leg curl allongé machine",
     groupe_musculaire="jambes",
-    muscle_cible=["ischios"],   # à confirmer
+    muscle_cible=["ischios"],   
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="LA01",
     nom="Leg curl assis machine",
     groupe_musculaire="jambes",
-    muscle_cible=["ischios"],   # à confirmer
+    muscle_cible=["ischios"],  
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="AD01",
     nom="Adducteurs machine",
@@ -121,31 +110,48 @@ def creer_catalogue():
     muscle_cible=["grand dorsal", "grand rond", "biceps"],
     type_materiel="poulie",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="TV01",
-    nom="Tirage vertical prise neutre largeur épaules",
+    nom="Tirage vertical prise neutre",
     groupe_musculaire="dos",
     muscle_cible=["grand dorsal", "grand rond", "biceps"],
     type_materiel="machine",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="PO01",
-    nom="Pull-over poulie haute (straight-arm pulldown)",
+    nom="Pull-over poulie haute",
     groupe_musculaire="dos",
     muscle_cible=["grand dorsal"],
     type_materiel="poulie",
 ))
-
     carnet.ajouter_exercice(Exercice(
     id_exercice="RM01",
-    nom="Rowing machine appui poitrine, coudes larges",
+    nom="Rowing machine",
     groupe_musculaire="dos",
     muscle_cible=["trapèze", "grand dorsal", "grand rond"],
     type_materiel="machine",
 ))
-
+    carnet.ajouter_exercice(Exercice(
+    id_exercice="TD01",
+    nom="Triceps dips machine",
+    groupe_musculaire="bras",
+    muscle_cible=["triceps"],
+    type_materiel="machine",
+))
+    carnet.ajouter_exercice(Exercice(
+    id_exercice="TE01",
+    nom="Extension triceps nuque poulie",
+    groupe_musculaire="bras",
+    muscle_cible=["triceps"],
+    type_materiel="poulie",
+))
+    carnet.ajouter_exercice(Exercice(
+    id_exercice="FS01",
+    nom="Fentes statiques haltères",
+    groupe_musculaire="jambes",
+    muscle_cible=["quadriceps", "fessier", "ischios"],
+    type_materiel="haltères",
+))
     
 
     carnet.sauvegarder("carnet.json")

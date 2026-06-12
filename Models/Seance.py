@@ -1,5 +1,5 @@
 from Fonctions_utiles.fonctions import accord
-from Models import ExerciceRealise
+from Models.ExerciceRealise import ExerciceRealise
 
 class Seance:
     def __init__(self, date, duree):

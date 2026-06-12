@@ -1,5 +1,5 @@
 from Fonctions_utiles.fonctions import accord
-from Models import Serie
+from Models.Serie import Serie
 
 class ExerciceRealise:
     def __init__(self, exercice):
