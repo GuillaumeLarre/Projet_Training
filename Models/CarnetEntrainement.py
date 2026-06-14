@@ -28,8 +28,9 @@ class CarnetEntrainement:
             for exercice_realise in seance.exercices_realises:
                 if exercice_realise.exercice.id_exercice == id_exercice:
                     for serie in exercice_realise.series:
-                        if serie.poids > poids_record:
-                            poids_record = serie.poids
+                        if not serie.est_echauffement:
+                            if serie.poids > poids_record:
+                                poids_record = serie.poids
         return poids_record
         
     def liste_exercices_pratiques(self):

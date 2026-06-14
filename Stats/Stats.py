@@ -4,17 +4,15 @@ from Constantes.Constantes import FOURCHETTE_SERIES_SEMAINE
 
 def volume_total_par_groupe_musculaire_seance(seance):
     volume_par_groupe_par_seance = defaultdict(float)
-    for exercices_realises in seance.exercices_realises:
-        for serie in exercices_realises.series:
-            volume_par_groupe_par_seance[exercices_realises.exercice.groupe_musculaire] += serie.poids * serie.reps
+    for exercice_realise in seance.exercices_realises:
+        volume_par_groupe_par_seance[exercice_realise.exercice.groupe_musculaire] += exercice_realise.volume_total
     return volume_par_groupe_par_seance
 
 def volume_total_par_groupe_musculaire(carnet):
     volume_par_groupe = defaultdict(float)
     for seance in carnet.seances:
         for exercice_realise in seance.exercices_realises:
-            for serie in exercice_realise.series:
-                volume_par_groupe[exercice_realise.exercice.groupe_musculaire] += serie.poids * serie.reps
+            volume_par_groupe[exercice_realise.exercice.groupe_musculaire] += exercice_realise.volume_total
     return volume_par_groupe
 
 def nb_series_par_groupe_et_par_muscle_cible_par_semaine(carnet):
@@ -62,11 +60,12 @@ def un_rm_estime_par_exercice(carnet):
         for exercice_realise in seance.exercices_realises:
             nom = exercice_realise.exercice.nom
             for serie in exercice_realise.series:
-                poids = serie.poids
-                reps = serie.reps
-                rm = poids * (1 + reps / 30)
-                if rm > records[nom]:
-                    records[nom] = rm
+                if not serie.est_echauffement:
+                    poids = serie.poids
+                    reps = serie.reps
+                    rm = poids * (1 + reps / 30)
+                    if rm > records[nom]:
+                        records[nom] = rm
     return {nom: round(rm, 1) for nom, rm in records.items()}
 
 def comparaison_nb_series_par_groupe_et_fourchette_scientifique(carnet):
@@ -92,7 +91,9 @@ def evolution_des_charges_dans_le_temps(carnet):
         for exercice_realise in seance.exercices_realises:
             record_local = 0.0
             for serie in exercice_realise.series:
-                if serie.poids > record_local:
-                    record_local = serie.poids
-            regroupement_record_poids_par_exercice_et_par_seance[exercice_realise.exercice.nom].append((seance.date, record_local))
+                if not serie.est_echauffement:
+                    if serie.poids > record_local:
+                        record_local = serie.poids
+            if record_local > 0:
+                regroupement_record_poids_par_exercice_et_par_seance[exercice_realise.exercice.nom].append((seance.date, record_local))
     return {nom: sorted(liste) for nom, liste in regroupement_record_poids_par_exercice_et_par_seance.items()}

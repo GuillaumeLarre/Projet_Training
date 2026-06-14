@@ -1,4 +1,4 @@
-from Interface.Interface import (afficher_menu, saisir_seance, afficher_records, saisir_exercice, lister_catalogue)
+from Interface.Interface import (afficher_menu, saisir_seance, afficher_records, saisir_exercice, lister_catalogue, supprimer_seances, modifier_seance)
 
 from Fonctions_utiles.fonctions import accord
 
@@ -95,7 +95,10 @@ def lancer_application():
             for nom, rm in sorted(un_rm_estime_par_exercice(carnet).items()):
                 print(f"\n  {nom} :")
                 print(f"    {rm:.1f} kg")
-
+        elif choix == "9":
+            supprimer_seances(carnet)
+        elif choix == "10":
+            modifier_seance(carnet)
         elif choix == "0":
             carnet.sauvegarder("carnet.json") 
             print("À bientôt !")

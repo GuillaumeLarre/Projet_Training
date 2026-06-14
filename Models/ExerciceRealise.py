@@ -11,11 +11,13 @@ class ExerciceRealise:
 
     @property
     def volume_total(self):
-        return sum(s.volume for s in self.series)
+        multiplicateur = 2 if self.exercice.type_materiel == "haltères" else 1
+        somme_series = sum(s.volume for s in self.series if not s.est_echauffement)
+        return round((multiplicateur * somme_series), 1)
 
     @property
     def nb_series(self):
-        return len(self.series)
+        return sum(1 for s in self.series if not s.est_echauffement)
 
     @property
     def serie_plus_lourde(self):
