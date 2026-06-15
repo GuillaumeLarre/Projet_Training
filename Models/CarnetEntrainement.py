@@ -1,28 +1,28 @@
 import json
-from Models.Exercice import Exercice
-from Models.Seance import Seance
+from models.Exercice import Exercice
+from models.Seance import Seance
 
 
 class CarnetEntrainement:
-    def __init__(self):
-        self.seances = []
-        self.exercices = {}
+    def __init__(self) -> None:
+        self.seances: list[Seance] = []
+        self.exercices: dict[str, Exercice] = {}
 
-    def ajouter_exercice(self, exercice):
+    def ajouter_exercice(self, exercice: Exercice) -> None:
         self.exercices[exercice.id_exercice] = exercice
 
-    def ajouter_seance(self, seance):
+    def ajouter_seance(self, seance: Seance) -> None:
         self.seances.append(seance)
 
     @property
-    def nb_seances(self):
+    def nb_seances(self) -> int:
         return len(self.seances)
 
     @property
-    def volume_total_global(self):
+    def volume_total_global(self) -> float:
         return sum(s.volume_total for s in self.seances)
     
-    def record_par_exercice(self, id_exercice):
+    def record_par_exercice(self, id_exercice: str) -> float:
         poids_record = 0
         for seance in self.seances:
             for exercice_realise in seance.exercices_realises:
@@ -33,14 +33,14 @@ class CarnetEntrainement:
                                 poids_record = serie.poids
         return poids_record
         
-    def liste_exercices_pratiques(self):
+    def liste_exercices_pratiques(self) -> list[str]:
         id_exercice_pratiques = set()
         for seance in self.seances:
             for exercice_realise in seance.exercices_realises:
                 id_exercice_pratiques.add(exercice_realise.exercice.id_exercice)
         return list(id_exercice_pratiques)
     
-    def afficher_historique(self):
+    def afficher_historique(self) -> None:
             if len(self.seances) == 0:
                 print("Aucune séance enregistrée")
             for seance in self.seances:
@@ -48,11 +48,11 @@ class CarnetEntrainement:
                 for exercice in seance.exercices_realises:
                     print(exercice)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {"seances": [s.to_dict() for s in self.seances], "exercices": [e.to_dict() for e in self.exercices.values()]}
 
     @classmethod
-    def from_dict(cls, donnees):
+    def from_dict(cls, donnees: dict) -> "CarnetEntrainement":
         carnet = cls()
         for exercice_dict in donnees["exercices"]:
             exercice = Exercice.from_dict(exercice_dict)
@@ -60,15 +60,14 @@ class CarnetEntrainement:
         for s_dict in donnees["seances"]:
             seance = Seance.from_dict(s_dict, carnet.exercices)
             carnet.ajouter_seance(seance)
-
         return carnet
     
-    def sauvegarder(self, chemin):
+    def sauvegarder(self, chemin: str) -> None:
         with open(chemin, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
 
     @classmethod
-    def charger(cls, chemin):
+    def charger(cls, chemin: str) -> "CarnetEntrainement":
         try:
             with open(chemin, "r", encoding="utf-8") as f:
                 donnees = json.load(f)

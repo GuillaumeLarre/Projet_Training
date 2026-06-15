@@ -2,3 +2,7 @@ __pycache__/
 *.pyc
 carnet.json
 .venv/
+.pytest_cache/
+.vscode/
+*.log
+.env

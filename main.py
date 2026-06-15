@@ -1,12 +1,12 @@
-from Interface.Interface import (afficher_menu, saisir_seance, afficher_records, saisir_exercice, lister_catalogue, supprimer_seances, modifier_seance)
+from interface.interface import (afficher_menu, saisir_seance, afficher_records, saisir_exercice, lister_catalogue, supprimer_seances, modifier_seance)
 
-from Fonctions_utiles.fonctions import accord
+from fonctions_utiles.fonctions import accord
 
 from datetime import date
 
-from Models.CarnetEntrainement import CarnetEntrainement
+from models.CarnetEntrainement import CarnetEntrainement
 
-from Stats.Stats import (evolution_des_charges_dans_le_temps, lister_exercices_differents_par_groupe, un_rm_estime_par_exercice, nb_series_par_groupe_et_par_muscle_cible_par_semaine, frequence_groupe_et_par_muscle_par_semaine, comparaison_nb_series_par_groupe_et_fourchette_scientifique)
+from stats.stats import (evolution_des_charges_dans_le_temps, lister_exercices_differents_par_groupe, un_rm_estime_par_exercice, nb_series_par_groupe_et_par_muscle_cible_par_semaine, frequence_groupe_et_par_muscle_par_semaine, comparaison_nb_series_par_groupe_et_fourchette_scientifique)
 
 def lancer_application():
     carnet = CarnetEntrainement.charger("carnet.json")

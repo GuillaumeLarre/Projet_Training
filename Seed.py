@@ -1,7 +1,7 @@
 import os
 import sys
-from Models.Exercice import Exercice
-from Models.CarnetEntrainement import CarnetEntrainement
+from models.Exercice import Exercice
+from models.CarnetEntrainement import CarnetEntrainement
 
 
 def creer_catalogue():

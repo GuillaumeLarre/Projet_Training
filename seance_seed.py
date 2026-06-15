@@ -1,8 +1,8 @@
 import sys
-from Models.CarnetEntrainement import CarnetEntrainement
-from Models.Seance import Seance
-from Models.ExerciceRealise import ExerciceRealise
-from Models.Serie import Serie
+from models.CarnetEntrainement import CarnetEntrainement
+from models.Seance import Seance
+from models.ExerciceRealise import ExerciceRealise
+from models.Serie import Serie
 
 def ajouter_si_absent(carnet, seance):
     for s in carnet.seances:

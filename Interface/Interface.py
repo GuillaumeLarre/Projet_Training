@@ -1,17 +1,18 @@
-from Models.Serie import Serie
-from Models.Exercice import Exercice
-from Models.Seance import Seance
-from Models.ExerciceRealise import ExerciceRealise
+from models.Serie import Serie
+from models.Exercice import Exercice
+from models.Seance import Seance
+from models.ExerciceRealise import ExerciceRealise
+from models.CarnetEntrainement import CarnetEntrainement
 
-from Fonctions_utiles.fonctions import verifier_date, demander_entier_positif
+from fonctions_utiles.fonctions import verifier_date, demander_entier_positif
 
-from Constantes.Constantes import GROUPES_MUSCULAIRES, MUSCLES_CIBLES,MATERIELS
+from constantes.constantes import GROUPES_MUSCULAIRES, MUSCLES_CIBLES,MATERIELS
 
-from Stats.Stats import volume_total_par_groupe_musculaire_seance
+from stats.stats import volume_total_par_groupe_musculaire_seance
 
 ##############################################################
 # Les fonctions répondant aux menus #
-def lister_catalogue(carnet):
+def lister_catalogue(carnet: CarnetEntrainement) -> None:
     if not carnet.exercices:
         print("Catalogue vide")
         return
@@ -19,7 +20,7 @@ def lister_catalogue(carnet):
     for exercice in carnet.exercices.values():
         print(f"[{exercice.id_exercice}] {exercice.nom} - {exercice.groupe_musculaire} : {exercice.muscle_cible} ({exercice.type_materiel})")
 
-def saisir_exercice(carnet):
+def saisir_exercice(carnet: CarnetEntrainement) -> None:
     print(f"--- Ajout d'un exercice au catalogue ---\n")
     while True:
         id_exercice = input("Saisis un ID d'exercice (ex: 001): ").strip().upper()
@@ -73,7 +74,7 @@ def saisir_exercice(carnet):
     carnet.ajouter_exercice(exercice)
     print(f"Exercice ajouté : [{id_exercice}] {nom}")
  
-def saisir_seance(carnet):
+def saisir_seance(carnet: CarnetEntrainement) -> None:
     while True:
         date = input("Saisie une date : ")
         if verifier_date(date):
@@ -117,7 +118,7 @@ def saisir_seance(carnet):
     else:
         print("Séance annulée car aucun exercice valide n'a été saisi")
     
-def afficher_records(carnet):
+def afficher_records(carnet: CarnetEntrainement) -> None:
     id_exercices = carnet.liste_exercices_pratiques()
     if not id_exercices:
         print("Aucun exercice enregistré.")
@@ -130,7 +131,7 @@ def afficher_records(carnet):
             print(f"{exercice.nom} :")
             print(f"    {record:.1f} kg")
 
-def supprimer_seances(carnet):
+def supprimer_seances(carnet: CarnetEntrainement) -> None:
     print("⚠️ Attention la suppression est définitive")
     while True:
         saisie = input("Confirmez-vous la suppression de toutes les séances ?")
@@ -145,7 +146,7 @@ def supprimer_seances(carnet):
         else:
             print("Réponse invalide, tape 'oui' ou 'non' ")
 
-def modifier_seance(carnet):
+def modifier_seance(carnet: CarnetEntrainement) -> None:
     seance_trouvee = None
     while True:
         date_seance = input("Saisie une date : ")
@@ -208,27 +209,10 @@ def modifier_seance(carnet):
                 print("Exercice annulé, aucune série saisie ")
 
         elif saisie_choix == "4":
+            exercice_trouve = choisir_exercice_realise_dans_seance(seance_trouvee, carnet)
+            if exercice_trouve is None:
+                continue
             print("⚠️ Attention la suppression est définitive")
-            while True:
-                saisie_id = input("Saisie un id exercice valide ou 'stop' ").strip().upper()
-                if saisie_id.lower() == "stop":
-                    print("Suppression annulée ")
-                    break
-                elif saisie_id not in carnet.exercices:
-                    print("Exercice inconnu ")
-                    continue
-                else:
-                    exercice_choisi = carnet.exercices[saisie_id]
-                exercice_trouve = None
-                for exercice_seance in seance_trouvee.exercices_realises:
-                    if exercice_seance.exercice == exercice_choisi:
-                        exercice_trouve = exercice_seance
-                if exercice_trouve is None:
-                    print("Cet exercice n'est pas enregistré dans cette séance ")
-                    continue
-                else:
-                    print("Exercice trouvé dans la séance ")
-                    break
             while True:
                 saisie = input("Confirmez-vous la suppression de l'exercice (o/n) ?")
                 if saisie.strip().lower() in ("non", "n"):
@@ -347,7 +331,7 @@ def modifier_seance(carnet):
 
 ##############################################################
 # Les fonctions de refactorisation #
-def saisir_series(exercice_realise):
+def saisir_series(exercice_realise: ExerciceRealise) -> None:
     while True:
             poids = input("Poids utilisé : ")
             if poids.strip().lower() == "fin":
@@ -375,7 +359,7 @@ def saisir_series(exercice_realise):
             serie = Serie(poids_utilise, reps_effectuees, echauffement)
             exercice_realise.ajouter_serie(serie)
     
-def choisir_exercice_realise_dans_seance(seance, carnet):
+def choisir_exercice_realise_dans_seance(seance: Seance, carnet: CarnetEntrainement) -> ExerciceRealise | None:
     exercice_realise_trouve = None
     while True:
         saisie_id = input("Saisie un id exercice valide ou 'stop' ").strip().upper()
@@ -398,7 +382,7 @@ def choisir_exercice_realise_dans_seance(seance, carnet):
             print("Exercice trouvé dans la séance ")
             return exercice_realise_trouve
         
-def choisir_index_serie(exercice_realise):
+def choisir_index_serie(exercice_realise: ExerciceRealise) -> int | None:
     if len(exercice_realise.series) == 0:
         print("Aucune série enregistrée sur cet exercice ")
         return None
@@ -420,7 +404,7 @@ def choisir_index_serie(exercice_realise):
     
 ##############################################################  
 # Les fonctions pour l'affichage de menu #
-def afficher_menu():
+def afficher_menu() -> None:
     print(f"=== CARNET D'ENTRAÎNEMENT ===")
     print(f"1. Ajouter une séance")
     print(f"2. Voir l'historique")
@@ -435,7 +419,7 @@ def afficher_menu():
     print(f"0. Quitter")
 
 
-def afficher_sous_menu():
+def afficher_sous_menu() -> None:
     print(f"1. Modifier la date")
     print(f"2. Modifier la durée")
     print(f"3. Ajouter un exercice")
@@ -446,7 +430,7 @@ def afficher_sous_menu():
     print(f"8. Supprimer la séance entière")
     print(f"0. Retour au menu principal")
 
-def afficher_sous_menu_modification_serie():
+def afficher_sous_menu_modification_serie() -> None:
     print(f"1. Modifier le poids")
     print(f"2. Modifier les reps")
     print(f"3. Modifier le statut échauffement")

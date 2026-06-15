@@ -1,5 +1,5 @@
-from Models.CarnetEntrainement import CarnetEntrainement
-from Stats.Stats import (
+from models.CarnetEntrainement import CarnetEntrainement
+from stats.stats import (
     volume_total_par_groupe_musculaire,
     nb_series_par_groupe_et_par_muscle_cible_par_semaine,
     lister_exercices_differents_par_groupe,
