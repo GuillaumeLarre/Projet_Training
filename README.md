@@ -83,7 +83,7 @@ Chaque classe suit le pattern POO suivant :
 ```bash
 # Cloner le repo
 git clone https://github.com/GuillaumeLarre/Projet_Training.git
-cd <nom-repo>
+cd Projet_Training
 
 # (Optionnel) créer un environnement virtuel
 python -m venv .venv
