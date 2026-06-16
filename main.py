@@ -10,6 +10,9 @@ from stats.stats import (evolution_des_charges_dans_le_temps, lister_exercices_d
 
 def lancer_application():
     carnet = CarnetEntrainement.charger("carnet.json")
+    print("╔═══════════════════════════════════════╗")
+    print("║  CARNET D'ENTRAÎNEMENT MUSCULATION    ║")
+    print("╚═══════════════════════════════════════╝")
     while True:
         afficher_menu()
         choix = input("Entre ton choix : ")
