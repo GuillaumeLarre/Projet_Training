@@ -1,7 +1,8 @@
 import json
 from models.Exercice import Exercice
 from models.Seance import Seance
-
+import logging
+logger = logging.getLogger(__name__)
 
 class CarnetEntrainement:
     def __init__(self) -> None:
@@ -65,12 +66,17 @@ class CarnetEntrainement:
     def sauvegarder(self, chemin: str) -> None:
         with open(chemin, "w", encoding="utf-8") as f:
             json.dump(self.to_dict(), f, indent=2, ensure_ascii=False)
+        logger.debug(f"Carnet sauvegardé dans '{chemin}'")
 
     @classmethod
     def charger(cls, chemin: str) -> "CarnetEntrainement":
+        logger.debug(f"Tentative de chargement du fichier '{chemin}'")
         try:
             with open(chemin, "r", encoding="utf-8") as f:
                 donnees = json.load(f)
-            return cls.from_dict(donnees)
+            carnet = cls.from_dict(donnees)
+            logger.info(f"Carnet chargé: {len(carnet.seances)} séances, {len(carnet.exercices)} exercices")
+            return carnet
         except FileNotFoundError:
+            logger.info(f"Fichier '{chemin}' inexistant, création d'un carnet vide")
             return cls()
