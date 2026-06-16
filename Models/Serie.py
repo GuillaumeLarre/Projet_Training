@@ -1,6 +1,10 @@
+import logging
+logger = logging.getLogger(__name__)
+
 class Serie:
     def __init__(self, poids: float, reps: int, est_echauffement: bool = False) -> None:
         if poids <= 0 or reps <= 0:
+            logger.warning(f"Création de Série refusée : poids={poids}, reps={reps}")
             raise ValueError("valeur incorrecte")
         self.poids = poids
         self.reps = reps

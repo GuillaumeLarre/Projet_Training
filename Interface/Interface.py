@@ -10,6 +10,9 @@ from constantes.constantes import GROUPES_MUSCULAIRES, MUSCLES_CIBLES,MATERIELS
 
 from stats.stats import volume_total_par_groupe_musculaire_seance
 
+import logging
+logger = logging.getLogger(__name__)
+
 ##############################################################
 # Les fonctions répondant aux menus #
 def lister_catalogue(carnet: CarnetEntrainement) -> None:
@@ -112,6 +115,7 @@ def saisir_seance(carnet: CarnetEntrainement) -> None:
     if seance.nb_exercices > 0:
         carnet.ajouter_seance(seance)
         print(seance)
+        logger.info(f"Nouvelle séance saisie par l'utilisateur: {seance.date}")
         print("\n=== Volume par groupe musculaire ===")
         for groupe, volume in volume_total_par_groupe_musculaire_seance(seance).items():
             print(f"  {groupe:15s} : {volume:.1f}")

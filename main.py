@@ -8,7 +8,13 @@ from models.CarnetEntrainement import CarnetEntrainement
 
 from stats.stats import (evolution_des_charges_dans_le_temps, lister_exercices_differents_par_groupe, un_rm_estime_par_exercice, nb_series_par_groupe_et_par_muscle_cible_par_semaine, frequence_groupe_et_par_muscle_par_semaine, comparaison_nb_series_par_groupe_et_fourchette_scientifique)
 
+from config_logging import configurer_logging
+
+import logging
+logger = logging.getLogger(__name__)
+
 def lancer_application():
+    logger.info("Démarrage de l'application")
     carnet = CarnetEntrainement.charger("carnet.json")
     print("╔═══════════════════════════════════════╗")
     print("║  CARNET D'ENTRAÎNEMENT MUSCULATION    ║")
@@ -18,7 +24,7 @@ def lancer_application():
         choix = input("Entre ton choix : ")
         if choix == "1":
             saisir_seance(carnet)
-            carnet.sauvegarder("carnet.json") 
+            carnet.sauvegarder("carnet.json")
         elif choix == "2":
             carnet.afficher_historique()
         elif choix == "3":
@@ -105,9 +111,12 @@ def lancer_application():
         elif choix == "0":
             carnet.sauvegarder("carnet.json") 
             print("À bientôt !")
+            logger.info("Fermeture de l'application")
             break
         else:
             print("Choix invalide")
 
 if __name__ == "__main__":
+    configurer_logging()
     lancer_application()
+

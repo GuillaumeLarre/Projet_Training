@@ -6,3 +6,4 @@ carnet.json
 .vscode/
 *.log
 .env
+app.log
