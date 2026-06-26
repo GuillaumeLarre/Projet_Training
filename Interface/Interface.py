@@ -10,28 +10,39 @@ from constantes.constantes import GROUPES_MUSCULAIRES, MUSCLES_CIBLES,MATERIELS
 
 from stats.stats import volume_total_par_groupe_musculaire_seance
 
+from database.exercices_repository import charger_catalogue, verifier_id_exercice_existe, verifier_nom_exercice_deja_utilise, ajouter_exercice
+
+from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete
+
 import logging
 logger = logging.getLogger(__name__)
 
+import _sqlite3
+
 ##############################################################
 # Les fonctions répondant aux menus #
-def lister_catalogue(carnet: CarnetEntrainement) -> None:
-    if not carnet.exercices:
+
+def afficher_catalogue(catalogue) -> None:
+    print(f"=== CATALOGUE DES EXERCICES ===\n")
+    for ligne in catalogue.values():
+        print(f"[{ligne['id_exercice']}] {ligne['nom']} - {ligne['groupe_musculaire']} : {', '.join(ligne['muscles_cibles'])} ({ligne['type_materiel']})")
+
+def lister_catalogue(conn) -> None:
+    catalogue = charger_catalogue(conn)
+    if not catalogue:
         print("Catalogue vide")
         return
-    print(f"=== CATALOGUE DES EXERCICES ===\n")
-    for exercice in carnet.exercices.values():
-        print(f"[{exercice.id_exercice}] {exercice.nom} - {exercice.groupe_musculaire} : {exercice.muscle_cible} ({exercice.type_materiel})")
+    afficher_catalogue(catalogue)
 
-def saisir_exercice(carnet: CarnetEntrainement) -> None:
+def saisir_exercice(conn) -> None:
     print(f"--- Ajout d'un exercice au catalogue ---\n")
     while True:
         id_exercice = input("Saisis un ID d'exercice (ex: 001): ").strip().upper()
         if not id_exercice:
             print("L'ID ne peut pas être vide ")
             continue
-        if id_exercice in carnet.exercices:
-            print(f"ID déjà prise par : {carnet.exercices[id_exercice].nom}")
+        if verifier_id_exercice_existe(conn, id_exercice):
+            print(f"ID déjà pris")
             continue
         break
     while True:
@@ -39,13 +50,8 @@ def saisir_exercice(carnet: CarnetEntrainement) -> None:
         if not nom:
             print("Le nom ne peut pas être vide")
             continue
-        nom_deja_utilise = False
-        for exercice in carnet.exercices.values():
-            if nom.title() == exercice.nom.title():
-                nom_deja_utilise = True
-                print(f"Nom déjà utilisé par : {exercice.nom}")
-                break
-        if nom_deja_utilise:
+        if verifier_nom_exercice_deja_utilise(conn, nom):
+            print("Nom déjà utilisé")
             continue
         break
     while True:
@@ -73,14 +79,20 @@ def saisir_exercice(carnet: CarnetEntrainement) -> None:
         if type_materiel in MATERIELS:
             break
         print("Matériel invalide") 
-    exercice = Exercice(id_exercice, nom, groupe_musculaire, liste_muscles_cibles, type_materiel)
-    carnet.ajouter_exercice(exercice)
+    ajouter_exercice(conn, id_exercice, nom, groupe_musculaire, type_materiel, liste_muscles_cibles)
     print(f"Exercice ajouté : [{id_exercice}] {nom}")
  
-def saisir_seance(carnet: CarnetEntrainement) -> None:
+def saisir_seance(conn) -> None:
+    catalogue = charger_catalogue(conn)
+    if not catalogue:
+        print("Catalogue vide")
+        return
     while True:
         date = input("Saisie une date : ")
         if verifier_date(date):
+            if verifier_date_seance_existe(conn, date):
+                print("Une séance existe déjà à cette date")
+                continue
             break
         else:
             print("Saisie une date valide")
@@ -94,33 +106,25 @@ def saisir_seance(carnet: CarnetEntrainement) -> None:
                 print("Saisie une durée valide")
         except ValueError:
             print("Saisie une valeur numérique")
-            continue
-    seance = Seance(date, duree)
+    liste_exercices_realises = []
     while True:
-        lister_catalogue(carnet)
-        if not carnet.exercices:
-            print("Tu dois ajouter au moins un exercice au catalogue avant de saisir une séance")
-            return
-        id_exercice = input("Saisie l'id de l'exercice : ").strip().lower()
+        afficher_catalogue(catalogue)
+        id_exercice = input("Saisie l'id de l'exercice : ").strip().upper()
         if id_exercice == "fin":
             break
-        if id_exercice not in carnet.exercices:
+        if id_exercice not in catalogue:
             print("Exercice inconnu")
             continue
-        exercice = carnet.exercices[id_exercice]
-        exercice_realise = ExerciceRealise(exercice)
-        saisir_series(exercice_realise)
-        if exercice_realise.nb_series > 0:
-            seance.ajouter_exercice(exercice_realise)
-    if seance.nb_exercices > 0:
-        carnet.ajouter_seance(seance)
-        print(seance)
-        logger.info(f"Nouvelle séance saisie par l'utilisateur: {seance.date}")
-        print("\n=== Volume par groupe musculaire ===")
-        for groupe, volume in volume_total_par_groupe_musculaire_seance(seance).items():
-            print(f"  {groupe:15s} : {volume:.1f}")
-    else:
+        liste_series = saisir_series()
+        if liste_series:
+            liste_exercices_realises.append({"id_exercice": id_exercice, "series": liste_series})
+    if not liste_exercices_realises:
         print("Séance annulée car aucun exercice valide n'a été saisi")
+        return
+    dict_seance = {"date": date, "duree": duree, "exercices_realises": liste_exercices_realises}
+    id_seance = enregistrer_seance_complete(conn, dict_seance)
+    print("Séance enregistrée")
+    logger.info(f"Nouvelle séance saisie : {date}")
     
 def afficher_records(carnet: CarnetEntrainement) -> None:
     id_exercices = carnet.liste_exercices_pratiques()
@@ -335,7 +339,8 @@ def modifier_seance(carnet: CarnetEntrainement) -> None:
 
 ##############################################################
 # Les fonctions de refactorisation #
-def saisir_series(exercice_realise: ExerciceRealise) -> None:
+def saisir_series() -> list:
+    liste_series = []
     while True:
             poids = input("Poids utilisé : ")
             if poids.strip().lower() == "fin":
@@ -353,15 +358,16 @@ def saisir_series(exercice_realise: ExerciceRealise) -> None:
             while True:
                 demande_echauffement = input("S'agit il d'une série d'échauffement ? (o/n)")
                 if demande_echauffement.strip().lower() in ("o", "oui"):
-                    echauffement = True
+                    echauffement = 1
                     break
                 elif demande_echauffement.strip().lower() in ("n", "non"):
-                    echauffement = False
+                    echauffement = 0
                     break
                 else:
                     print("Entre une valeur valide (o/n)")
-            serie = Serie(poids_utilise, reps_effectuees, echauffement)
-            exercice_realise.ajouter_serie(serie)
+            liste_series.append({"poids": poids_utilise, "reps": reps_effectuees, "est_echauffement": echauffement})
+    return liste_series
+            
     
 def choisir_exercice_realise_dans_seance(seance: Seance, carnet: CarnetEntrainement) -> ExerciceRealise | None:
     exercice_realise_trouve = None

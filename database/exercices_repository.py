@@ -10,20 +10,16 @@ def ajouter_exercice(conn, id_exercice, nom, groupe_musculaire, type_materiel, m
 
 def charger_catalogue(conn) -> dict:
     cursor = conn.cursor()
+    catalogue = {}
     cursor.execute(
-        "SELECT * FROM exercices"
+        "SELECT e.id_exercice, e.nom, e.groupe_musculaire, e.type_materiel, m.nom_muscle FROM exercices e JOIN muscles_cibles_exercices m ON m.id_exercice = e.id_exercice"
     )
     exercices = cursor.fetchall()
-    catalogue = {}
     for ligne in exercices:
-        liste_muscles_cibles = []
-        cursor.execute(
-            "SELECT nom_muscle FROM muscles_cibles_exercices WHERE id_exercice = ?", (ligne["id_exercice"],)
-        )
-        muscles_cibles = cursor.fetchall()
-        for muscle in muscles_cibles:
-            liste_muscles_cibles.append(muscle["nom_muscle"])
-        catalogue[ligne["id_exercice"]] = {"id_exercice": ligne["id_exercice"], "nom": ligne["nom"], "groupe_musculaire": ligne["groupe_musculaire"], "type_materiel": ligne["type_materiel"], "muscles_cibles": liste_muscles_cibles}
+        id_ex = ligne["id_exercice"]
+        if id_ex not in catalogue:
+            catalogue[id_ex] = {"id_exercice": id_ex, "nom": ligne["nom"], "groupe_musculaire": ligne["groupe_musculaire"], "type_materiel": ligne["type_materiel"], "muscles_cibles": []}
+        catalogue[id_ex]["muscles_cibles"].append(ligne["nom_muscle"])
     return catalogue
 
 def verifier_id_exercice_existe(conn, id_exercice) -> bool:

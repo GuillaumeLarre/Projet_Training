@@ -148,3 +148,30 @@ def charger_seance_complete(conn, id_seance) -> dict | None:
     seance_complete = {"id_seance": seance["id_seance"], "date": seance["date"], "duree": seance["duree"], "exercices_realises": liste_exercices_realises}
     return seance_complete
 
+def enregistrer_seance_complete(conn, dict_seance) -> int:
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO seances (date, duree) VALUES (?, ?)", (dict_seance["date"], dict_seance["duree"])
+    )
+    id_seance = cursor.lastrowid
+    exercices_realises = dict_seance["exercices_realises"]
+    for exo_realise in exercices_realises:
+        cursor.execute(
+            "INSERT INTO exercices_realises (id_exercice, id_seance) VALUES (?, ?)", (exo_realise["id_exercice"], id_seance)
+        )
+        id_exercice_realise = cursor.lastrowid
+        series = exo_realise["series"]
+        for position, serie in enumerate(series, start=1):
+            cursor.execute(
+                "INSERT INTO series (numero_serie, poids, reps, est_echauffement, id_exercice_realise) VALUES (?, ?, ?, ?, ?)", (position, serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
+            )
+    return id_seance
+
+def verifier_date_seance_existe(conn, date) -> bool:
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id_seance FROM seances WHERE date = ?", (date,)
+    )
+    resultat = cursor.fetchone()
+    return resultat is not None
+
