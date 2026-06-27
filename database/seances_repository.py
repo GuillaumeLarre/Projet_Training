@@ -55,6 +55,10 @@ def supprimer_seance(conn, id_seance) -> None:
         "DELETE FROM seances WHERE id_seance = ?", (id_seance,)
     )
 
+def supprimer_toutes_les_seances(conn) -> None:
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM seances")
+
 def supprimer_exercice_realise(conn, id_exercice_realise) -> None:
     cursor = conn.cursor()
     cursor.execute(
@@ -175,3 +179,31 @@ def verifier_date_seance_existe(conn, date) -> bool:
     resultat = cursor.fetchone()
     return resultat is not None
 
+def prochain_numero(conn, id_exercice_realise) -> int:
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT MAX(numero_serie) FROM series WHERE id_exercice_realise = ?", (id_exercice_realise,)
+    )
+    resultat = cursor.fetchone()
+    valeur_max = resultat[0]
+    if valeur_max is None:
+        return 1
+    return valeur_max + 1
+
+def modifier_poids_serie(conn, id_serie, nouveau_poids) -> None:
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE series SET poids = ? WHERE id_serie = ?", (nouveau_poids, id_serie)
+    )
+
+def modifier_reps_serie(conn, id_serie, nouvelles_reps) -> None:
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE series SET reps = ? WHERE id_serie = ?", (nouvelles_reps, id_serie)
+    )
+
+def modifier_echauffement_serie(conn, id_serie, nouvel_est_echauffement) -> None:
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE series SET est_echauffement = ? WHERE id_serie = ?", (nouvel_est_echauffement, id_serie)
+    )
