@@ -1,6 +1,6 @@
 GROUPES_MUSCULAIRES = ["pectoraux", "dos", "jambes", "epaules", "bras", "abdos"]
 
-MUSCLES_CIBLES = ["portion supérieure des pecs", "portion médiane des pecs", "portion inférieure des pecs", "trapèze", "grand dorsal", "grand rond", "triceps", "biceps", "deltoide antérieur", "deltoide postérieur", "deltoide médian", "ischios", "mollets", "fessier", "quadriceps", "adducteur"]
+MUSCLES_CIBLES = ["portion supérieure des pecs", "portion médiane des pecs", "portion inférieure des pecs", "trapèze", "grand dorsal", "grand rond", "triceps", "biceps", "deltoide antérieur", "deltoide postérieur", "deltoide médian", "ischios", "mollets", "fessier", "quadriceps", "adducteur", "grand droit", "oblique", "tranverse"]
 
 MATERIELS = ["barre", "haltères", "machine", "poulie", "poids du corps", "élastique"]
 

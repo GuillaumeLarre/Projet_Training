@@ -5,6 +5,7 @@ def ajouter_seance(conn, date, duree) -> int:
     cursor.execute(
         "INSERT INTO seances (date, duree) VALUES (?, ?)", (date, duree)
     )
+    conn.commit()
     return cursor.lastrowid
 
 def ajouter_exercice_realise_a_seance(conn,id_seance, id_exercice) -> int:
@@ -12,6 +13,7 @@ def ajouter_exercice_realise_a_seance(conn,id_seance, id_exercice) -> int:
     cursor.execute(
         "INSERT INTO exercices_realises (id_exercice, id_seance) VALUES (?, ?)", (id_exercice, id_seance)
     )
+    conn.commit()
     return cursor.lastrowid
 
 def ajouter_serie(conn, numero_serie, poids, reps, est_echauffement, id_exercice_realise) -> int:
@@ -19,6 +21,7 @@ def ajouter_serie(conn, numero_serie, poids, reps, est_echauffement, id_exercice
     cursor.execute(
         "INSERT INTO series (numero_serie, poids, reps, est_echauffement, id_exercice_realise) VALUES (?, ?, ?, ?, ?)", (numero_serie, poids, reps, est_echauffement, id_exercice_realise)
     )
+    conn.commit()
     return cursor.lastrowid
 
 def lister_seances(conn) -> list[sqlite3.Row]:
@@ -42,40 +45,47 @@ def modifier_date_seance(conn, id_seance, nouvelle_date) -> None:
     cursor.execute(
         "UPDATE seances SET date = ? WHERE id_seance = ?", (nouvelle_date, id_seance)
     )
+    conn.commit()
 
 def modifier_duree_seance(conn, id_seance, nouvelle_duree) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE seances SET duree = ? WHERE id_seance = ?", (nouvelle_duree, id_seance)
     )
+    conn.commit()
 
 def supprimer_seance(conn, id_seance) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "DELETE FROM seances WHERE id_seance = ?", (id_seance,)
     )
+    conn.commit()
 
 def supprimer_toutes_les_seances(conn) -> None:
     cursor = conn.cursor()
     cursor.execute("DELETE FROM seances")
+    conn.commit()
 
 def supprimer_exercice_realise(conn, id_exercice_realise) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "DELETE FROM exercices_realises WHERE id_exercice_realise = ?", (id_exercice_realise,)
     )
+    conn.commit()
 
 def modifier_serie(conn, id_serie, nouveau_poids, nouvelles_reps, nouvel_est_echauffement) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE series SET poids = ?, reps = ?, est_echauffement = ? WHERE id_serie = ?", (nouveau_poids, nouvelles_reps, nouvel_est_echauffement, id_serie)
     )
+    conn.commit()
 
 def supprimer_serie(conn, id_serie) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "DELETE FROM series WHERE id_serie = ?", (id_serie,)
     )
+    conn.commit()
 
 def lister_exercices_realises_par_seance(conn, id_seance) -> list:
     cursor = conn.cursor()
@@ -169,6 +179,7 @@ def enregistrer_seance_complete(conn, dict_seance) -> int:
             cursor.execute(
                 "INSERT INTO series (numero_serie, poids, reps, est_echauffement, id_exercice_realise) VALUES (?, ?, ?, ?, ?)", (position, serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
             )
+    conn.commit()
     return id_seance
 
 def verifier_date_seance_existe(conn, date) -> bool:
@@ -195,15 +206,18 @@ def modifier_poids_serie(conn, id_serie, nouveau_poids) -> None:
     cursor.execute(
         "UPDATE series SET poids = ? WHERE id_serie = ?", (nouveau_poids, id_serie)
     )
+    conn.commit()
 
 def modifier_reps_serie(conn, id_serie, nouvelles_reps) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE series SET reps = ? WHERE id_serie = ?", (nouvelles_reps, id_serie)
     )
+    conn.commit()
 
 def modifier_echauffement_serie(conn, id_serie, nouvel_est_echauffement) -> None:
     cursor = conn.cursor()
     cursor.execute(
         "UPDATE series SET est_echauffement = ? WHERE id_serie = ?", (nouvel_est_echauffement, id_serie)
     )
+    conn.commit()

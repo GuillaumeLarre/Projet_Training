@@ -7,6 +7,7 @@ def ajouter_exercice(conn, id_exercice, nom, groupe_musculaire, type_materiel, m
     cursor.executemany(
         "INSERT INTO muscles_cibles_exercices (id_exercice, nom_muscle) VALUES (?, ?)", lignes_muscles
     )
+    conn.commit()
 
 def charger_catalogue(conn) -> dict:
     cursor = conn.cursor()

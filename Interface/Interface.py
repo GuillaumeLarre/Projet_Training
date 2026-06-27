@@ -36,7 +36,7 @@ def afficher_historique(conn) -> None:
     for seance in seances:
         print(f"[{seance['id_seance']}] {seance['date']} - {seance['duree']} min")
     while True:
-        saisie = input("Saisie l'ID de la séance à voir ou 'fin' :")
+        saisie = input("Saisie l'ID de la séance à voir ou 'fin' :").strip().lower()
         if saisie == "fin":
             return
         if not saisie:
@@ -68,7 +68,7 @@ def lister_catalogue(conn) -> None:
     afficher_catalogue(catalogue)
 
 def saisir_exercice(conn) -> None:
-    print(f"--- Ajout d'un exercice au catalogue ---\n")
+    print(f"--- Ajout d'un exercice au catalogue ---")
     while True:
         id_exercice = input("Saisis un ID d'exercice (ex: 001): ").strip().upper()
         if not id_exercice:
@@ -142,8 +142,8 @@ def saisir_seance(conn) -> None:
     liste_exercices_realises = []
     while True:
         afficher_catalogue(catalogue)
-        id_exercice = input("Saisie l'id de l'exercice : ").strip().upper()
-        if id_exercice == "fin":
+        id_exercice = input("Saisie l'id de l'exercice ou 'fin' : ").strip().upper()
+        if id_exercice == "FIN":
             break
         if id_exercice not in catalogue:
             print("Exercice inconnu")
@@ -155,7 +155,7 @@ def saisir_seance(conn) -> None:
         print("Séance annulée car aucun exercice valide n'a été saisi")
         return
     dict_seance = {"date": date, "duree": duree, "exercices_realises": liste_exercices_realises}
-    id_seance = enregistrer_seance_complete(conn, dict_seance)
+    enregistrer_seance_complete(conn, dict_seance)
     print("Séance enregistrée")
     logger.info(f"Nouvelle séance saisie : {date}")
     
@@ -283,10 +283,12 @@ def modifier_seance(conn) -> None:
                         continue
                 modifier_poids_serie(conn, id_serie, nouveau_poids)
                 print("Poids modifié ")
+                afficher_serie_apres_modification(conn, id_serie, id_exercice_realise)
             elif saisie == "2":
                 nouvelles_reps = demander_entier_positif("Reps effectuées : ")
                 modifier_reps_serie(conn, id_serie, nouvelles_reps)
                 print("Nouvelles répétitions enregistrées ")
+                afficher_serie_apres_modification(conn, id_serie, id_exercice_realise)
             elif saisie == "3":
                 while True:
                     demande_echauffement = input("S'agit il d'une série d'échauffement ? (o/n)")
@@ -300,6 +302,7 @@ def modifier_seance(conn) -> None:
                         print("Entre une valeur valide (o/n)")
                 modifier_echauffement_serie(conn, id_serie, nouvel_echauffement)
                 print("Echauffement modifié ")
+                afficher_serie_apres_modification(conn, id_serie, id_exercice_realise)
             elif saisie == "0":
                 continue
  
@@ -331,6 +334,7 @@ def modifier_seance(conn) -> None:
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
                     supprimer_serie(conn, id_serie)
+                    print("Série supprimée")
                     break
                 else: 
                     print("Réponse invalide, tape 'oui' ou 'non'")
@@ -358,7 +362,7 @@ def modifier_seance(conn) -> None:
 def saisir_series() -> list:
     liste_series = []
     while True:
-            poids = input("Poids utilisé : ")
+            poids = input("Poids utilisé ou 'fin': ")
             if poids.strip().lower() == "fin":
                 break
             try:
@@ -426,6 +430,13 @@ def choisir_id_serie(conn, id_exercice_realise) -> int | None:
         else:
             print("Numéro de série invalide ")
 
+def afficher_serie_apres_modification(conn, id_serie, id_exercice_realise) -> None:
+    series = lister_series_par_exercice_realise(conn, id_exercice_realise)
+    for serie in series:
+        if serie["id_serie"] == id_serie:
+            echauffement = " (échauffement)" if serie["est_echauffement"] else ""
+            print(f"Série {serie['numero_serie']} : {serie['poids']} kg x {serie['reps']}{echauffement}")
+            return
 
     
 ##############################################################  
