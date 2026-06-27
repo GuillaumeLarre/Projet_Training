@@ -12,7 +12,7 @@ from stats.stats import volume_total_par_groupe_musculaire_seance
 
 from database.exercices_repository import charger_catalogue, verifier_id_exercice_existe, verifier_nom_exercice_deja_utilise, ajouter_exercice
 
-from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete
+from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete, supprimer_toutes_les_seances, lister_seances, charger_seance_complete, modifier_date_seance, modifier_duree_seance, charger_seance_par_date, ajouter_exercice_realise_a_seance, prochain_numero, verifier_exercice_deja_dans_seance, supprimer_exercice_realise, verifier_exercice_realise_existe, lister_exercices_realises_par_seance, lister_series_par_exercice_realise, verifier_serie_existe, modifier_echauffement_serie, modifier_poids_serie, modifier_reps_serie, supprimer_serie, supprimer_seance
 
 import logging
 logger = logging.getLogger(__name__)
@@ -26,6 +26,39 @@ def afficher_catalogue(catalogue) -> None:
     print(f"=== CATALOGUE DES EXERCICES ===\n")
     for ligne in catalogue.values():
         print(f"[{ligne['id_exercice']}] {ligne['nom']} - {ligne['groupe_musculaire']} : {', '.join(ligne['muscles_cibles'])} ({ligne['type_materiel']})")
+
+def afficher_historique(conn) -> None:
+    seances = lister_seances(conn)
+    if not seances:
+        print("Aucune séance enregistrée")
+        return
+    print("=== Historique ===\n")
+    for seance in seances:
+        print(f"[{seance['id_seance']}] {seance['date']} - {seance['duree']} min")
+    while True:
+        saisie = input("Saisie l'ID de la séance à voir ou 'fin' :")
+        if saisie == "fin":
+            return
+        if not saisie:
+            print("Saisie un ID")
+            continue
+        if not saisie.isdigit():
+            print("L'ID doit être composé de chiffres")
+            continue
+        afficher_seance_detail(conn, int(saisie))
+        
+
+def afficher_seance_detail(conn, id_seance) -> None:
+    seance_complete = charger_seance_complete(conn, id_seance)
+    if seance_complete is None:
+        print("Aucune séance trouvée avec cet ID")
+        return
+    print(f"[{seance_complete['id_seance']}] {seance_complete['date']} - {seance_complete['duree']} min")
+    for exercice in seance_complete["exercices_realises"]:
+        print(f"{exercice['nom']}")
+        for serie in exercice["series"]:
+            mention = "(échauffement)" if serie['est_echauffement'] else ""
+            print(f"{serie['numero_serie']}. {serie['poids']:.1f} kg - {serie['reps']} fois {mention}")
 
 def lister_catalogue(conn) -> None:
     catalogue = charger_catalogue(conn)
@@ -139,7 +172,7 @@ def afficher_records(carnet: CarnetEntrainement) -> None:
             print(f"{exercice.nom} :")
             print(f"    {record:.1f} kg")
 
-def supprimer_seances(carnet: CarnetEntrainement) -> None:
+def supprimer_seances(conn) -> None:
     print("⚠️ Attention la suppression est définitive")
     while True:
         saisie = input("Confirmez-vous la suppression de toutes les séances ?")
@@ -147,28 +180,23 @@ def supprimer_seances(carnet: CarnetEntrainement) -> None:
             print("Suppression annulée")
             break
         elif saisie.strip().lower() == "oui":
+            supprimer_toutes_les_seances(conn)
             print("Toutes les séances ont été supprimées")
-            carnet.seances.clear()
-            carnet.sauvegarder("carnet.json")
             break
         else:
             print("Réponse invalide, tape 'oui' ou 'non' ")
 
-def modifier_seance(carnet: CarnetEntrainement) -> None:
-    seance_trouvee = None
+def modifier_seance(conn) -> None:
     while True:
         date_seance = input("Saisie une date : ")
         if verifier_date(date_seance):
+            seance = charger_seance_par_date(conn, date_seance)
+            if seance is None:
+                print("Aucune séance effectuée à cette date")
+                continue
             break
         else:
             print("Saisie une date valide")
-    for seance in carnet.seances:
-        if seance.date == date_seance:
-            seance_trouvee = seance
-            break
-    if seance_trouvee is None:
-        print("Aucune séance enregistrée à cette date")
-        return
     while True:
         afficher_sous_menu()
         saisie_choix = input("Choisis une option :")
@@ -179,46 +207,42 @@ def modifier_seance(carnet: CarnetEntrainement) -> None:
             while True:
                 saisie_nouvelle_date = input("Entre la nouvelle date ")
                 if verifier_date(saisie_nouvelle_date):
-                    date_deja_utilisee = False
-                    for seance in carnet.seances:
-                        if seance is not seance_trouvee and seance.date == saisie_nouvelle_date:
-                            date_deja_utilisee = True
-                            break
-                    if date_deja_utilisee:
+                    if verifier_date_seance_existe(conn, saisie_nouvelle_date):
                         print("Date de séance déjà enregistrée ")
                     else:
-                        seance_trouvee.date = saisie_nouvelle_date
+                        modifier_date_seance(conn, seance['id_seance'], saisie_nouvelle_date)
                         print("Date modifiée ")
-                        carnet.sauvegarder("carnet.json")
                         break
                 else:
                     print("Entre une date valide ")
 
         elif saisie_choix == "2":
             saisie_duree = demander_entier_positif("Saisie la nouvelle durée ")
-            seance_trouvee.duree = saisie_duree
+            modifier_duree_seance(conn, seance["id_seance"], saisie_duree)
             print("Durée modifiée")
-            carnet.sauvegarder("carnet.json")
 
         elif saisie_choix == "3":
-            lister_catalogue(carnet)
+            lister_catalogue(conn)
             id_exercice = input("Saisie l'id de l'exercice : ").strip().upper()
-            if id_exercice not in carnet.exercices:
+            if not verifier_id_exercice_existe(conn, id_exercice):
                 print("Exercice inconnu")
                 continue
-            exercice = carnet.exercices[id_exercice]
-            exercice_realise = ExerciceRealise(exercice)
-            saisir_series(exercice_realise)
-            if len (exercice_realise.series) > 0:
-                seance_trouvee.ajouter_exercice(exercice_realise)
-                print("Exercice ajouté ")
-                carnet.sauvegarder("carnet.json")
-            else:
-                print("Exercice annulé, aucune série saisie ")
+            if verifier_exercice_deja_dans_seance(conn, seance["id_seance"], id_exercice):
+                print("Exercice déjà dans la séance")
+                continue
+            liste_series = saisir_series()
+            if not liste_series:
+                print("Aucune série ajouté, annulation de l'ajout d'exercice")
+                continue
+            id_exercice_realise = ajouter_exercice_realise_a_seance(conn, seance["id_seance"], id_exercice)
+            print("Exercice ajouté ")
+            for position, serie in enumerate(liste_series, start=1):
+                ajouter_serie(conn, position, serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
+
 
         elif saisie_choix == "4":
-            exercice_trouve = choisir_exercice_realise_dans_seance(seance_trouvee, carnet)
-            if exercice_trouve is None:
+            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance["id_seance"])
+            if id_exercice_realise is None:
                 continue
             print("⚠️ Attention la suppression est définitive")
             while True:
@@ -227,21 +251,19 @@ def modifier_seance(carnet: CarnetEntrainement) -> None:
                     print("Suppression annulée")
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
+                    supprimer_exercice_realise(conn, id_exercice_realise)
                     print("L'exercice a été supprimé")
-                    seance_trouvee.exercices_realises.remove(exercice_trouve)
-                    carnet.sauvegarder("carnet.json")
                     break
                 else:
                     print("Réponse invalide, tape 'oui' ou 'non'")
 
         elif saisie_choix == "5":
-            exercice_realise_trouve = choisir_exercice_realise_dans_seance(seance_trouvee, carnet)
-            if exercice_realise_trouve is None:
+            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance["id_seance"])
+            if id_exercice_realise is None:
                 continue
-            index_serie = choisir_index_serie(exercice_realise_trouve)
-            if index_serie is None:
+            id_serie = choisir_id_serie(conn, id_exercice_realise)
+            if id_serie is None:
                 continue
-            serie_a_modifier = exercice_realise_trouve.series[index_serie]
             afficher_sous_menu_modification_serie()
             while True:
                 saisie = input("Saisie une option ")
@@ -259,50 +281,47 @@ def modifier_seance(carnet: CarnetEntrainement) -> None:
                     except ValueError:
                         print("Poids invalide ")
                         continue
-                serie_a_modifier.poids = nouveau_poids
-                carnet.sauvegarder("carnet.json")
+                modifier_poids_serie(conn, id_serie, nouveau_poids)
                 print("Poids modifié ")
             elif saisie == "2":
                 nouvelles_reps = demander_entier_positif("Reps effectuées : ")
-                serie_a_modifier.reps = nouvelles_reps
-                carnet.sauvegarder("carnet.json")
+                modifier_reps_serie(conn, id_serie, nouvelles_reps)
                 print("Nouvelles répétitions enregistrées ")
             elif saisie == "3":
                 while True:
                     demande_echauffement = input("S'agit il d'une série d'échauffement ? (o/n)")
                     if demande_echauffement.strip().lower() in ("o", "oui"):
-                        echauffement = True
+                        nouvel_echauffement = 1
                         break
                     elif demande_echauffement.strip().lower() in ("n", "non"):
-                        echauffement = False
+                        nouvel_echauffement = 0
                         break
                     else:
                         print("Entre une valeur valide (o/n)")
-                serie_a_modifier.est_echauffement = echauffement
-                carnet.sauvegarder("carnet.json")
+                modifier_echauffement_serie(conn, id_serie, nouvel_echauffement)
                 print("Echauffement modifié ")
             elif saisie == "0":
                 continue
  
         elif saisie_choix == "6":
-            exercice_realise_trouve = choisir_exercice_realise_dans_seance(seance_trouvee, carnet)
-            if exercice_realise_trouve is None:
+            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance['id_seance'])
+            if id_exercice_realise is None:
                 continue
-            nb_avant = len(exercice_realise_trouve.series)
-            saisir_series(exercice_realise_trouve)
-            nb_apres = len(exercice_realise_trouve.series)
-            nb_ajoutees = nb_apres - nb_avant
-            if nb_ajoutees > 0:
-                carnet.sauvegarder("carnet.json")
-                print(f"{nb_ajoutees} série(s) ajoutée(s)")
-            else:
+            liste_series = saisir_series()
+            if len(liste_series) == 0:
                 print("Aucune série ajoutée")
-        elif saisie_choix == "7":
-            exercice_realise_trouve = choisir_exercice_realise_dans_seance(seance_trouvee, carnet)
-            if exercice_realise_trouve is None:
                 continue
-            index_serie = choisir_index_serie(exercice_realise_trouve)
-            if index_serie is None:
+            for serie in liste_series:
+                num_serie = prochain_numero(conn, id_exercice_realise)
+                ajouter_serie(conn, num_serie,serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
+            print(f"{len(liste_series)} série(s) ajoutée(s)")
+
+        elif saisie_choix == "7":
+            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance["id_seance"])
+            if id_exercice_realise is None:
+                continue
+            id_serie = choisir_id_serie(conn, id_exercice_realise)
+            if id_serie is None:
                 continue
             print("⚠️ Attention la suppression est définitive")
             while True:
@@ -311,9 +330,7 @@ def modifier_seance(carnet: CarnetEntrainement) -> None:
                     print("Suppression annulée")
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
-                    del exercice_realise_trouve.series[index_serie]
-                    carnet.sauvegarder("carnet.json")
-                    print("Série supprimée")
+                    supprimer_serie(conn, id_serie)
                     break
                 else: 
                     print("Réponse invalide, tape 'oui' ou 'non'")
@@ -326,8 +343,7 @@ def modifier_seance(carnet: CarnetEntrainement) -> None:
                     print("Suppression annulée")
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
-                    carnet.seances.remove(seance_trouvee)
-                    carnet.sauvegarder("carnet.json")
+                    supprimer_seance(conn, seance["id_seance"])
                     print("La séance a été supprimée")
                     return
                 else: 
@@ -369,44 +385,44 @@ def saisir_series() -> list:
     return liste_series
             
     
-def choisir_exercice_realise_dans_seance(seance: Seance, carnet: CarnetEntrainement) -> ExerciceRealise | None:
-    exercice_realise_trouve = None
+def choisir_exercice_realise_dans_seance(conn, id_seance) -> int | None:
+    liste_exercices_realises = lister_exercices_realises_par_seance(conn, id_seance)
+    if not liste_exercices_realises:
+        print("Aucun exercice réalisé dans cette séance")
+        return None
+    ids_valides = {exo["id_exercice_realise"] for exo in liste_exercices_realises}
+    for exo_realise in liste_exercices_realises:
+        print(f"[{exo_realise['id_exercice_realise']}] {exo_realise['nom']}")
     while True:
         saisie_id = input("Saisie un id exercice valide ou 'stop' ").strip().upper()
         if saisie_id.lower() == "stop":
             print("Modification annulée ")
             return None
-        elif saisie_id not in carnet.exercices:
-            print("Exercice inconnu ")
+        if not saisie_id.isdigit():
+            print("L'ID doit être un nombre")
             continue
-        else:
-            exercice_choisi = carnet.exercices[saisie_id]
-        for exercice_seance in seance.exercices_realises:
-            if exercice_seance.exercice == exercice_choisi:
-                exercice_realise_trouve = exercice_seance
-                break
-        if exercice_realise_trouve is None:
-            print("Cet exercice n'est pas enregistré dans cette séance ")
+        id_choisi = int(saisie_id)
+        if id_choisi not in ids_valides:
+            print("Cet ID n'est pas dans la séance")
             continue
-        else:
-            print("Exercice trouvé dans la séance ")
-            return exercice_realise_trouve
+        return id_choisi
         
-def choisir_index_serie(exercice_realise: ExerciceRealise) -> int | None:
-    if len(exercice_realise.series) == 0:
+def choisir_id_serie(conn, id_exercice_realise) -> int | None:
+    liste_series_exercice_realise = lister_series_par_exercice_realise(conn, id_exercice_realise)
+    if len(liste_series_exercice_realise) == 0:
         print("Aucune série enregistrée sur cet exercice ")
         return None
-    for position, serie in enumerate(exercice_realise.series, start=1):
-        print(f"{position}. {serie.poids} kg x {serie.reps}")
+    ids_valides = {serie['id_serie'] for serie in liste_series_exercice_realise}
+    for serie in liste_series_exercice_realise:
+        print(f"[{serie['id_serie']}] {serie['poids']} kg x {serie['reps']}")
     while True:
-        saisie_num_serie = input("Saisie le numéro de la série ")
-        if not saisie_num_serie.isdigit():
+        saisie_id_serie = input("Saisie l'ID de la série ")
+        if not saisie_id_serie.isdigit():
             print("Saisie invalide, entre un numéro ")
             continue
-        index_serie = int(saisie_num_serie) - 1
-        if 0 <= index_serie < len(exercice_realise.series):
+        if int(saisie_id_serie) in ids_valides:
             print("Numéro de série valide ")
-            return index_serie
+            return int(saisie_id_serie)
         else:
             print("Numéro de série invalide ")
 
