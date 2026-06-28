@@ -1,250 +1,96 @@
-import sys
-from models.CarnetEntrainement import CarnetEntrainement
-from models.Seance import Seance
-from models.ExerciceRealise import ExerciceRealise
-from models.Serie import Serie
+from database.seances_repository import verifier_date_seance_existe, enregistrer_seance_complete
+from database.exercices_repository import charger_catalogue
+import sqlite3
 
-def ajouter_si_absent(carnet, seance):
-    for s in carnet.seances:
-        if s.date == seance.date:
-            print(f"⚠️  Séance déjà existante pour le {seance.date}, ignorée.")
-            return
-    carnet.ajouter_seance(seance)
-
+def exo(id_exercice, *series_tuples):
+    """Construit le dict d'un exercice réalisé à partir de tuples (poids, reps)."""
+    return {
+        "id_exercice": id_exercice,
+        "series": [{"poids": p, "reps": r, "est_echauffement": 0} for p, r in series_tuples]
+    }
 
 def ajouter_seances():
-
-    carnet = CarnetEntrainement.charger("carnet.json")
-    
-    if not carnet.exercices:
-        print("⚠️  Le catalogue est vide. Lance d'abord seed.py.")
-        sys.exit()
-
-    
-
-    seance = Seance("2026-06-08", 105)
-
-    exo = ExerciceRealise(carnet.exercices["DC01"])
-    exo.ajouter_serie(Serie(30, 13))
-    exo.ajouter_serie(Serie(30, 10))
-    exo.ajouter_serie(Serie(30, 9))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["DI01"])
-    exo.ajouter_serie(Serie(24, 13))
-    exo.ajouter_serie(Serie(24, 12))
-    exo.ajouter_serie(Serie(24, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EP01"])
-    exo.ajouter_serie(Serie(14, 15))
-    exo.ajouter_serie(Serie(14, 13))
-    exo.ajouter_serie(Serie(14, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["CP01"])
-    exo.ajouter_serie(Serie(51, 15))
-    exo.ajouter_serie(Serie(51, 13))
-    exo.ajouter_serie(Serie(51, 11))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["CU01"])
-    exo.ajouter_serie(Serie(20, 13))
-    exo.ajouter_serie(Serie(20, 12))
-    exo.ajouter_serie(Serie(20, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EL01"])
-    exo.ajouter_serie(Serie(9, 20))
-    exo.ajouter_serie(Serie(9, 18))
-    exo.ajouter_serie(Serie(11, 15))
-    exo.ajouter_serie(Serie(9, 18))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EA01"])
-    exo.ajouter_serie(Serie(9, 20))
-    exo.ajouter_serie(Serie(9, 18))
-    exo.ajouter_serie(Serie(9, 16))
-    seance.ajouter_exercice(exo)
-
-    ajouter_si_absent(carnet, seance)
-
-    seance = Seance("2026-06-09", 105)
-
-    exo = ExerciceRealise(carnet.exercices["LE01"])
-    exo.ajouter_serie(Serie(107, 13))
-    exo.ajouter_serie(Serie(107, 11))
-    exo.ajouter_serie(Serie(107, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["HS01"])
-    exo.ajouter_serie(Serie(90, 13))
-    exo.ajouter_serie(Serie(90, 11))
-    exo.ajouter_serie(Serie(90, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["PR01"])
-    exo.ajouter_serie(Serie(120, 13))
-    exo.ajouter_serie(Serie(140, 12))
-    exo.ajouter_serie(Serie(140, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["LC01"])
-    exo.ajouter_serie(Serie(50, 15))
-    exo.ajouter_serie(Serie(50, 13))
-    exo.ajouter_serie(Serie(50, 11))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["LA01"])
-    exo.ajouter_serie(Serie(52, 13))
-    exo.ajouter_serie(Serie(59, 12))
-    exo.ajouter_serie(Serie(59, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["AD01"])
-    exo.ajouter_serie(Serie(45, 20))
-    exo.ajouter_serie(Serie(52, 13))
-    exo.ajouter_serie(Serie(52, 11))
-    seance.ajouter_exercice(exo)
-
-    ajouter_si_absent(carnet, seance)
-
-    seance = Seance("2026-06-10", 105)
-
-    exo = ExerciceRealise(carnet.exercices["RV01"])
-    exo.ajouter_serie(Serie(73, 12))
-    exo.ajouter_serie(Serie(73, 11))
-    exo.ajouter_serie(Serie(73, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["TV01"])
-    exo.ajouter_serie(Serie(86, 13))
-    exo.ajouter_serie(Serie(86, 10))
-    exo.ajouter_serie(Serie(86, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["PO01"])
-    exo.ajouter_serie(Serie(54, 15))
-    exo.ajouter_serie(Serie(54, 13))
-    exo.ajouter_serie(Serie(54, 12))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["RM01"])
-    exo.ajouter_serie(Serie(64, 14))
-    exo.ajouter_serie(Serie(64, 13))
-    exo.ajouter_serie(Serie(64, 12))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["CP01"])
-    exo.ajouter_serie(Serie(51, 15))
-    exo.ajouter_serie(Serie(51, 13))
-    exo.ajouter_serie(Serie(51, 11))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["CU01"])
-    exo.ajouter_serie(Serie(20, 13))
-    exo.ajouter_serie(Serie(20, 11))
-    exo.ajouter_serie(Serie(20, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EA01"])
-    exo.ajouter_serie(Serie(9, 20))
-    exo.ajouter_serie(Serie(9, 18))
-    exo.ajouter_serie(Serie(9, 16))
-    seance.ajouter_exercice(exo)
-
-    ajouter_si_absent(carnet, seance)
-
-    seance = Seance("2026-06-11", 105)
-
-    exo = ExerciceRealise(carnet.exercices["DC01"])
-    exo.ajouter_serie(Serie(30, 13))
-    exo.ajouter_serie(Serie(30, 10))
-    exo.ajouter_serie(Serie(30, 9))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["DI01"])
-    exo.ajouter_serie(Serie(24, 13))
-    exo.ajouter_serie(Serie(24, 12))
-    exo.ajouter_serie(Serie(24, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EP01"])
-    exo.ajouter_serie(Serie(14, 15))
-    exo.ajouter_serie(Serie(14, 13))
-    exo.ajouter_serie(Serie(14, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["TD01"])
-    exo.ajouter_serie(Serie(45, 20))
-    exo.ajouter_serie(Serie(54, 15))
-    exo.ajouter_serie(Serie(54, 13))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["TE01"])
-    exo.ajouter_serie(Serie(32, 14))
-    exo.ajouter_serie(Serie(36, 13))
-    exo.ajouter_serie(Serie(36, 12))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EL01"])
-    exo.ajouter_serie(Serie(9, 20))
-    exo.ajouter_serie(Serie(9, 18))
-    exo.ajouter_serie(Serie(11, 15))
-    exo.ajouter_serie(Serie(9, 18))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["EA01"])
-    exo.ajouter_serie(Serie(9, 20))
-    exo.ajouter_serie(Serie(9, 18))
-    exo.ajouter_serie(Serie(9, 16))
-    seance.ajouter_exercice(exo)
-
-    ajouter_si_absent(carnet, seance)
-
-    seance = Seance("2026-06-12", 105)
-
-    exo = ExerciceRealise(carnet.exercices["LE01"])
-    exo.ajouter_serie(Serie(107, 13))
-    exo.ajouter_serie(Serie(107, 11))
-    exo.ajouter_serie(Serie(107, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["PR01"])
-    exo.ajouter_serie(Serie(120, 13))
-    exo.ajouter_serie(Serie(140, 12))
-    exo.ajouter_serie(Serie(140, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["FS01"])
-    exo.ajouter_serie(Serie(36, 10))
-    exo.ajouter_serie(Serie(36, 10))
-    exo.ajouter_serie(Serie(36, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["LC01"])
-    exo.ajouter_serie(Serie(50, 15))
-    exo.ajouter_serie(Serie(50, 13))
-    exo.ajouter_serie(Serie(50, 11))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["LA01"])
-    exo.ajouter_serie(Serie(52, 13))
-    exo.ajouter_serie(Serie(59, 12))
-    exo.ajouter_serie(Serie(59, 10))
-    seance.ajouter_exercice(exo)
-
-    exo = ExerciceRealise(carnet.exercices["AD01"])
-    exo.ajouter_serie(Serie(45, 20))
-    exo.ajouter_serie(Serie(52, 13))
-    exo.ajouter_serie(Serie(52, 11))
-    seance.ajouter_exercice(exo)
-
-    ajouter_si_absent(carnet, seance)
-
-
-    carnet.sauvegarder("carnet.json")
-    print(f"Séances ajoutées : {len(carnet.seances)} séance(s) dans le carnet.")
+    with sqlite3.connect("musculation.db") as conn:
+        conn.execute("PRAGMA foreign_keys = ON")
+        conn.row_factory = sqlite3.Row
+        catalogue = charger_catalogue(conn) 
+        if not catalogue:
+            print("⚠️  Le catalogue est vide. Lance d'abord seed.py.")
+            return
+        seances = [
+        {
+            "date": "2026-06-08",
+            "duree": 105,
+            "exercices_realises": [
+                exo("DC01", (30, 13), (30, 10), (30, 9)),
+                exo("DI01", (24, 13), (24, 12), (24, 10)),
+                exo("EP01", (14, 15), (14, 13), (14, 10)),
+                exo("CP01", (51, 15), (51, 13), (51, 11)),
+                exo("CU01", (20, 13), (20, 12), (20, 10)),
+                exo("EL01", (9, 20), (9, 18), (11, 15), (9, 18)),
+                exo("EA01", (9, 20), (9, 18), (9, 16)),
+            ],
+        },
+        {
+            "date": "2026-06-09",
+            "duree": 105,
+            "exercices_realises": [
+                exo("LE01", (107, 13), (107, 11), (107, 10)),
+                exo("HS01", (90, 13), (90, 11), (90, 10)),
+                exo("PR01", (120, 13), (140, 12), (140, 10)),
+                exo("LC01", (50, 15), (50, 13), (50, 11)),
+                exo("LA01", (52, 13), (59, 12), (59, 10)),
+                exo("AD01", (45, 20), (52, 13), (52, 11)),
+            ],
+        },
+        {
+            "date": "2026-06-10",
+            "duree": 105,
+            "exercices_realises": [
+                exo("RV01", (73, 12), (73, 11), (73, 10)),
+                exo("TV01", (86, 13), (86, 10), (86, 10)),
+                exo("PO01", (54, 15), (54, 13), (54, 12)),
+                exo("RM01", (64, 14), (64, 13), (64, 12)),
+                exo("CP01", (51, 15), (51, 13), (51, 11)),
+                exo("CU01", (20, 13), (20, 11), (20, 10)),
+                exo("EA01", (9, 20), (9, 18), (9, 16)),
+            ],
+        },
+        {
+            "date": "2026-06-11",
+            "duree": 105,
+            "exercices_realises": [
+                exo("DC01", (30, 13), (30, 10), (30, 9)),
+                exo("DI01", (24, 13), (24, 12), (24, 10)),
+                exo("EP01", (14, 15), (14, 13), (14, 10)),
+                exo("TD01", (45, 20), (54, 15), (54, 13)),
+                exo("TE01", (32, 14), (36, 13), (36, 12)),
+                exo("EL01", (9, 20), (9, 18), (11, 15), (9, 18)),
+                exo("EA01", (9, 20), (9, 18), (9, 16)),
+            ],
+        },
+        {
+            "date": "2026-06-12",
+            "duree": 105,
+            "exercices_realises": [
+                exo("LE01", (107, 13), (107, 11), (107, 10)),
+                exo("PR01", (120, 13), (140, 12), (140, 10)),
+                exo("FS01", (36, 10), (36, 10), (36, 10)),
+                exo("LC01", (50, 15), (50, 13), (50, 11)),
+                exo("LA01", (52, 13), (59, 12), (59, 10)),
+                exo("AD01", (45, 20), (52, 13), (52, 11)),
+            ],
+        },
+    ]
+        nb_ajoutees = 0
+        for seance in seances:
+            if verifier_date_seance_existe(conn, seance["date"]):
+                print(f"⚠️ Séance déjà existante pour le {seance['date']}, ignorée.")
+                continue
+            enregistrer_seance_complete(conn, seance)
+            nb_ajoutees += 1
+        
+        print(f"{nb_ajoutees} séance(s) ajoutée(s).")
 
 
 if __name__ == "__main__":
