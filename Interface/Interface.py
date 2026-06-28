@@ -1,18 +1,12 @@
-from models.Serie import Serie
-from models.Exercice import Exercice
-from models.Seance import Seance
-from models.ExerciceRealise import ExerciceRealise
-from models.CarnetEntrainement import CarnetEntrainement
-
 from fonctions_utiles.fonctions import verifier_date, demander_entier_positif
 
 from constantes.constantes import GROUPES_MUSCULAIRES, MUSCLES_CIBLES,MATERIELS
 
-from stats.stats import volume_total_par_groupe_musculaire_seance
+from stats.stats import record_par_exercice, liste_exercices_pratiques, volume_total_par_groupe_musculaire_seance
 
 from database.exercices_repository import charger_catalogue, verifier_id_exercice_existe, verifier_nom_exercice_deja_utilise, ajouter_exercice
 
-from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete, supprimer_toutes_les_seances, lister_seances, charger_seance_complete, modifier_date_seance, modifier_duree_seance, charger_seance_par_date, ajouter_exercice_realise_a_seance, prochain_numero, verifier_exercice_deja_dans_seance, supprimer_exercice_realise, verifier_exercice_realise_existe, lister_exercices_realises_par_seance, lister_series_par_exercice_realise, verifier_serie_existe, modifier_echauffement_serie, modifier_poids_serie, modifier_reps_serie, supprimer_serie, supprimer_seance
+from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete, supprimer_toutes_les_seances, lister_seances, charger_seance_complete, modifier_date_seance, modifier_duree_seance, charger_seance_par_date, ajouter_exercice_realise_a_seance, prochain_numero, verifier_exercice_deja_dans_seance, supprimer_exercice_realise, verifier_exercice_realise_existe, lister_exercices_realises_par_seance, lister_series_par_exercice_realise, verifier_serie_existe, modifier_echauffement_serie, modifier_poids_serie, modifier_reps_serie, supprimer_serie, supprimer_seance, charger_toutes_les_seances_completes
 
 import logging
 logger = logging.getLogger(__name__)
@@ -155,22 +149,27 @@ def saisir_seance(conn) -> None:
         print("Séance annulée car aucun exercice valide n'a été saisi")
         return
     dict_seance = {"date": date, "duree": duree, "exercices_realises": liste_exercices_realises}
-    enregistrer_seance_complete(conn, dict_seance)
+    id_seance = enregistrer_seance_complete(conn, dict_seance)
     print("Séance enregistrée")
     logger.info(f"Nouvelle séance saisie : {date}")
+    print("\n=== Volume par groupe musculaire ===")
+    seance = charger_seance_complete(conn, id_seance)
+    for groupe, volume in volume_total_par_groupe_musculaire_seance(seance).items():
+        print(f"  {groupe:15s} : {volume:.1f}")
     
-def afficher_records(carnet: CarnetEntrainement) -> None:
-    id_exercices = carnet.liste_exercices_pratiques()
-    if not id_exercices:
+def afficher_records(conn) -> None:
+    seances = charger_toutes_les_seances_completes(conn)
+    liste_ids = liste_exercices_pratiques(seances)
+    catalogue = charger_catalogue(conn)
+    if not liste_ids:
         print("Aucun exercice enregistré.")
         return
-    else:
-        print("Records par exercice :")
-        for id_ex in id_exercices:
-            exercice = carnet.exercices[id_ex]
-            record = carnet.record_par_exercice(id_ex)
-            print(f"{exercice.nom} :")
-            print(f"    {record:.1f} kg")
+    print("Records par exercice :")
+    for id_ex in liste_ids:
+        nom = catalogue[id_ex]["nom"]
+        record = record_par_exercice(id_ex, seances)
+        print(f"{nom} :")
+        print(f"    {record:.1f} kg")
 
 def supprimer_seances(conn) -> None:
     print("⚠️ Attention la suppression est définitive")

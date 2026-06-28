@@ -1,5 +1,7 @@
 import sqlite3
 
+from database.exercices_repository import charger_catalogue
+
 def ajouter_seance(conn, date, duree) -> int:
     cursor = conn.cursor()
     cursor.execute(
@@ -151,6 +153,7 @@ def charger_seance_complete(conn, id_seance) -> dict | None:
     seance = cursor.fetchone()
     if seance is None:
         return None
+    catalogue = charger_catalogue(conn)
     liste_exercices_realises = []
     exercices_realises = lister_exercices_realises_par_seance(conn, id_seance)
     for ligne in exercices_realises:
@@ -158,9 +161,20 @@ def charger_seance_complete(conn, id_seance) -> dict | None:
         liste_series = lister_series_par_exercice_realise(conn, ligne["id_exercice_realise"])
         for serie in liste_series:
             liste_series_realises.append({"id_serie": serie["id_serie"], "numero_serie": serie["numero_serie"], "poids": serie["poids"], "reps": serie["reps"], "est_echauffement": serie["est_echauffement"]})
-        liste_exercices_realises.append({"id_exercice_realise": ligne["id_exercice_realise"], "id_exercice": ligne["id_exercice"], "nom": ligne["nom"], "series": liste_series_realises})
+        liste_exercices_realises.append({"id_exercice_realise": ligne["id_exercice_realise"], "id_exercice": ligne["id_exercice"], "nom": ligne["nom"], "groupe_musculaire": catalogue[ligne["id_exercice"]]["groupe_musculaire"], "muscles_cibles": catalogue[ligne["id_exercice"]]["muscles_cibles"], "type_materiel": catalogue[ligne["id_exercice"]]["type_materiel"], "series": liste_series_realises})
     seance_complete = {"id_seance": seance["id_seance"], "date": seance["date"], "duree": seance["duree"], "exercices_realises": liste_exercices_realises}
     return seance_complete
+
+def charger_toutes_les_seances_completes(conn) -> list:
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id_seance FROM seances"
+    )
+    liste_seances = []
+    resultat = cursor.fetchall()
+    for ligne in resultat:
+        liste_seances.append(charger_seance_complete(conn, ligne["id_seance"]))
+    return liste_seances
 
 def enregistrer_seance_complete(conn, dict_seance) -> int:
     cursor = conn.cursor()
