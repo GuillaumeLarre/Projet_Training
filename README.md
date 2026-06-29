@@ -1,80 +1,97 @@
 # Carnet d'entraînement musculation
 
-Application Python en ligne de commande pour suivre ses séances de musculation, analyser sa progression, et comparer ses volumes hebdomadaires aux recommandations scientifiques.
+Application Python en ligne de commande pour suivre ses séances de musculation, analyser sa progression et comparer ses volumes hebdomadaires à des fourchettes de référence.
 
-Projet personnel développé pour mettre en pratique la programmation orientée objet, la persistance de données, et les bonnes pratiques de développement (tests automatiques, type hints, modules)
+Projet personnel développé pour mettre en pratique une architecture en couches, SQLite avec le module `sqlite3`, le pattern Repository, les tests automatisés, les annotations de types et les bonnes pratiques de développement Python.
 
 ---
 
 ## Fonctionnalités
 
-- **Catalogue d'exercices** personnalisable avec groupe musculaire, muscles ciblés et type de matériel
-- **Saisie de séances** détaillées (date, durée, exercices, séries avec poids/reps/échauffement)
-- **Modification et suppression** d'une séance ou de ses composants individuels
-- **Stats d'entraînement** :
-  - Volume total par groupe musculaire
-  - Nombre de séries par groupe et par muscle cible, par semaine
-  - Fréquence d'entraînement par groupe et par muscle
-  - 1RM estimé par exercice (formule d'Epley)
-  - Comparaison aux fourchettes scientifiques (insuffisant / fourchette basse / optimum / fourchette haute)
-  - Évolution des charges dans le temps
-  - Records par exercice
-- **Récapitulatif hebdomadaire** automatique sur la semaine en cours
-- **Persistance JSON** rétrocompatible
+* **Catalogue d'exercices** personnalisable avec groupe musculaire, muscles ciblés et type de matériel
+* **Saisie de séances** détaillées :
+
+  * date ;
+  * durée ;
+  * exercices réalisés ;
+  * séries avec poids, répétitions et échauffement.
+* **Modification et suppression** d'une séance ou de ses composants individuels :
+
+  * date ;
+  * durée ;
+  * exercice réalisé ;
+  * série ;
+  * séance complète.
+* **Base SQLite** avec contraintes d'intégrité :
+
+  * clés étrangères ;
+  * contraintes `UNIQUE` ;
+  * contraintes `CHECK` ;
+  * valeurs par défaut ;
+  * suppressions en cascade avec `ON DELETE CASCADE`.
+* **Stats d'entraînement** :
+
+  * volume total par groupe musculaire ;
+  * nombre de séries par groupe et par muscle cible, par semaine ;
+  * fréquence d'entraînement par groupe et par muscle ;
+  * 1RM estimé par exercice avec la formule d'Epley ;
+  * comparaison aux fourchettes scientifiques ;
+  * évolution des charges dans le temps ;
+  * records par exercice.
+* **Récapitulatif hebdomadaire** automatique sur la semaine en cours
 
 ---
 
 ## Architecture
-Projet-Training/
 
-├── models/                     # Classes du domaine
+```text
+Projet_Training/
 
-│   ├── Serie.py
-
-│   ├── Exercice.py
-
-│   ├── ExerciceRealise.py
-
-│   ├── Seance.py
-
-│   └── CarnetEntrainement.py
-
-├── stats/
-
-│   └── stats.py                # Fonctions d'analyse statistique
-
+├── database/
+│   ├── schema.py                 # Création du schéma SQLite
+│   ├── exercices_repository.py   # Accès base pour le catalogue d'exercices
+│   └── seances_repository.py     # Accès base pour les séances, exercices réalisés et séries
+│
 ├── interface/
-
-│   └── interface.py            # Interface utilisateur (CLI)
-
+│   └── interface.py              # Interface utilisateur en ligne de commande
+│
+├── stats/
+│   └── stats.py                  # Fonctions d'analyse statistique
+│
 ├── constantes/
-
-│   └── constantes.py           # Listes de référence (muscles, matériels, fourchettes scientifiques)
-
+│   └── constantes.py             # Listes de référence : muscles, matériels, fourchettes
+│
 ├── fonctions_utiles/
-
-│   └── fonctions.py            # Helpers (validation date, accord, saisie)
-
-├── tests/                      # Suite pytest
-
-│   ├── test_serie.py
-
-│   ├── test_exercice_realise.py
-
+│   └── fonctions.py              # Helpers : validation de date, accord, saisies contrôlées
+│
+├── models/                       # Ancienne architecture POO, conservée pour référence
+│   ├── Serie.py
+│   ├── Exercice.py
+│   ├── ExerciceRealise.py
+│   ├── Seance.py
+│   └── CarnetEntrainement.py
+│
+├── tests/
+│   ├── test_exercices_repository.py
+│   ├── test_seances_repository.py
 │   └── test_stats.py
+│
+├── seed.py                       # Initialisation du catalogue d'exercices
+├── seances_seed.py               # Séances de démonstration
+├── main.py                       # Point d'entrée de l'application
+└── conftest.py                   # Configuration et fixtures pytest
+```
 
-├── seed.py                     # Catalogue d'exercices initial
+L'application est organisée en couches :
 
-├── seances_seed.py             # Séances de démonstration
+* `database/` isole tout le SQL grâce au pattern Repository ;
+* `interface/` gère l'orchestration, les menus et les saisies utilisateur ;
+* `stats/` contient la logique d'analyse et de calcul ;
+* `constantes/` centralise les listes de référence utilisées par l'application.
 
-├── main.py                     # Point d'entrée
+La base SQLite est créée automatiquement si elle n'existe pas encore.
 
-└── conftest.py                 # Configuration pytest
-
-Chaque classe suit le pattern POO suivant :
-- Constructeur avec validation des paramètres
-- Properties pour les calculs dérivés (volume, nb_series, etc.)
-- Méthodes `to_dict()` / `from_dict()` pour la sérialisation JSON
+Les suppressions dépendantes sont gérées par SQLite grâce aux clés étrangères et aux règles `ON DELETE CASCADE`. Par exemple, la suppression d'une séance entraîne automatiquement la suppression des exercices réalisés et des séries associés.
 
 ---
 
@@ -85,10 +102,12 @@ Chaque classe suit le pattern POO suivant :
 git clone https://github.com/GuillaumeLarre/Projet_Training.git
 cd Projet_Training
 
-# (Optionnel) créer un environnement virtuel
+# Créer un environnement virtuel
 python -m venv .venv
+
+# Activer l'environnement virtuel
 .venv\Scripts\activate          # Windows
-# source .venv/bin/activate    # macOS/Linux
+# source .venv/bin/activate     # macOS/Linux
 
 # Installer les dépendances
 pip install -r requirements.txt
@@ -99,56 +118,93 @@ pip install -r requirements.txt
 ## Utilisation
 
 ```bash
-# Initialiser le catalogue d'exercices (à faire une fois)
+# Initialiser le catalogue d'exercices
 python seed.py
 
-# (Optionnel) charger des séances de démonstration
+# Charger des séances de démonstration
 python seances_seed.py
 
 # Lancer l'application
 python main.py
 ```
 
-Le menu principal propose 10 options pour saisir, consulter, analyser ou modifier ses entraînements.
+La base SQLite est créée automatiquement au premier lancement si elle n'existe pas encore.
+
+Le menu principal permet de saisir, consulter, analyser, modifier ou supprimer des entraînements.
 
 ---
 
 ## Tests
 
-Suite de tests automatiques avec pytest (20 tests couvrant les classes principales et les stats).
+Le projet utilise `pytest` pour les tests automatisés.
+Suite de 18 tests automatisés.
+
+Les tests repository utilisent des fixtures et une base SQLite en mémoire afin d'isoler les tests et d'éviter de modifier la base réelle.
 
 ```bash
 pytest
 ```
 
+Les tests couvrent notamment :
+
+* la création du schéma SQLite ;
+* le repository des exercices ;
+* le repository des séances ;
+* les ajouts, modifications et suppressions ;
+* le chargement d'une séance complète ;
+* les fonctions statistiques.
+
 ---
 
 ## Technologies
 
-- **Python 3.11+**
-- **pytest** pour les tests automatiques
-- **JSON** pour la persistance des données
-- Annotations de types (PEP 484/604) vérifiées par Pylance/mypy
+* **Python 3.11+**
+* **SQLite**
+* **sqlite3**
+* **pytest**
+* **Logging**
+* **Annotations de types** avec la syntaxe moderne Python
+* **Pylance** pour l'aide au typage dans VS Code
 
 ---
 
 ## Roadmap
 
-- [x] Architecture POO et persistance JSON
-- [x] Stats d'entraînement complètes
-- [x] Modification/suppression de séances individuelles
-- [x] Tests pytest
-- [x] Type hints sur toute la base
-- [ ] Migration vers SQLite (SQLAlchemy)
-- [ ] Logging structuré
-- [ ] Interface web (Flask)
-- [ ] Visualisations graphiques (matplotlib)
-- [ ] Progressive Web App (PWA) pour mobile
+## Roadmap
+
+* [x] Architecture POO initiale
+* [x] Stats d'entraînement complètes
+* [x] Modification et suppression de séances individuelles
+* [x] Type hints sur la base de code
+* [x] Logging structuré
+* [x] Migration vers SQLite avec `sqlite3`
+* [x] Pattern Repository pour isoler le SQL
+* [x] Contraintes d'intégrité SQL et suppressions en cascade
+* [x] Suite de tests pytest avec fixtures et base en mémoire
+* [ ] Refactorisation des repositories vers SQLAlchemy (ORM)
+* [ ] Exposition de l'application via une API Flask ou FastAPI
+* [ ] Frontend HTML/CSS responsive
+* [ ] Progressive Web App (PWA) installable sur mobile
+* [ ] Visualisations graphiques des stats
 
 ---
+
+## Choix techniques et apprentissages
+
+Ce projet a été l'occasion d'expérimenter plusieurs décisions d'architecture significatives :
+
+* **Pattern Repository** : les accès à la base sont isolés dans `database/`, ce qui sépare le SQL du reste du code. Cette séparation rend la migration future vers SQLAlchemy possible sans toucher à la logique métier ni à l'interface.
+
+* **Cascade SQL plutôt que cascade Python** : les suppressions imbriquées (séance → exercices réalisés → séries) sont déclarées au niveau du schéma avec `ON DELETE CASCADE`. Avantage : ajouter une nouvelle table enfant n'oblige pas à modifier les fonctions de suppression existantes, la règle est portée par la FK elle-même.
+
+* **Stats sur dicts plutôt que sur objets** : les fonctions d'analyse ont été refactorisées pour opérer sur les données brutes retournées par les repositories (listes de dicts) au lieu d'un arbre d'objets en mémoire. Cette approche est cohérente avec une future migration vers une architecture web, où chaque requête HTTP est isolée et ne maintient pas d'état global.
+
+* **Tests avec fixtures pytest et base SQLite en mémoire** : chaque test reçoit une base fraîche grâce à une fixture, ce qui garantit l'isolation et la rapidité (les 18 tests s'exécutent en moins de 100 ms). Cette approche permet de tester des comportements complexes (contraintes, cascades) sans nécessiter de configuration externe.
+
+* **Atomicité des opérations métier** : la fonction `enregistrer_seance_complete` regroupe en une seule transaction l'enregistrement d'une séance, de ses exercices et de ses séries. Cela évite de laisser des données partielles en base en cas d'interruption.
 
 ## Auteur
 
 Guillaume LARRE — étudiant en bachelor informatique.
 
-Projet en cours d'évolution dans le cadre d'un apprentissage continu des bonnes pratiques de développement Python.
+Projet en cours d'évolution dans le cadre d'un apprentissage progressif des bonnes pratiques de développement Python, SQL et architecture logicielle.
