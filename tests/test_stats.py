@@ -1,54 +1,75 @@
-import pytest
-from models.Serie import Serie
-from models.Exercice import Exercice
-from models.ExerciceRealise import ExerciceRealise
-from models.Seance import Seance
-from models.CarnetEntrainement import CarnetEntrainement
-from stats.stats import (
-    volume_total_par_groupe_musculaire,
-    un_rm_estime_par_exercice,
-    nb_series_par_groupe_et_par_muscle_cible_par_semaine,
-)
-def faire_carnet_simple():
-    exo = Exercice("LE01", "Leg extension", "jambes", ["quadriceps"], "machine")
-    seance = Seance("2026-06-01", 60)
-    ex_r = ExerciceRealise(exo)
-    ex_r.ajouter_serie(Serie(50, 10))
-    ex_r.ajouter_serie(Serie(60, 8))
-    seance.ajouter_exercice(ex_r)
-    carnet = CarnetEntrainement()
-    carnet.ajouter_exercice(exo)
-    carnet.ajouter_seance(seance)
-    return carnet
+from stats.stats import lister_exercices_differents_par_groupe, un_rm_estime_par_exercice, record_par_exercice, volume_total_exercice_realise
 
-
-def test_volume_total_par_groupe_carnet_simple():
-    carnet = faire_carnet_simple()
-    resultat = volume_total_par_groupe_musculaire(carnet)
-    assert resultat["jambes"] == 980
-
-
-def test_un_rm_estime_formule_epley():
-    carnet = faire_carnet_simple()
-    resultat = un_rm_estime_par_exercice(carnet)
-    assert resultat["Leg extension"] == 76.0
-    # Formule 1rm = poids * (1 + reps/30) #
-    # Série 1: 76 #
-    # Série 2: 66.7 #
-
-def test_nb_series_ignore_echauffement():
-    exo = Exercice("LE01", "Leg extension", "jambes", ["quadriceps"], "machine")
-    seance = Seance("2026-06-01", 60)
-    ex_r = ExerciceRealise(exo)
-    ex_r.ajouter_serie(Serie(20, 15, est_echauffement=True))
-    ex_r.ajouter_serie(Serie(50, 10))
-    ex_r.ajouter_serie(Serie(60, 8))
-    seance.ajouter_exercice(ex_r)
+def test_lister_exercices_differents_par_groupe():
+    seances = [
+        {
+            "date": "2026-06-24",
+            "duree": 90,
+            "exercices_realises": [
+                {"id_exercice": "DC01", "nom": "Développé couché", "groupe_musculaire": "pectoraux", "muscles_cibles": ["pec"], "type_materiel": "barre", "series": []},
+                {"id_exercice": "SQ01", "nom": "Squat", "groupe_musculaire": "jambes", "muscles_cibles": ["quadriceps"], "type_materiel": "barre", "series": []},
+            ]
+        },
+        {
+            "date": "2026-06-25",
+            "duree": 90,
+            "exercices_realises": [
+                {"id_exercice": "DC01", "nom": "Développé couché", "groupe_musculaire": "pectoraux", "muscles_cibles": ["pec"], "type_materiel": "barre", "series": []},
+            ]
+        },
+    ]
     
-    carnet = CarnetEntrainement()
-    carnet.ajouter_exercice(exo)
-    carnet.ajouter_seance(seance)
-    
-    nb_par_groupe, _ = nb_series_par_groupe_et_par_muscle_cible_par_semaine(carnet)
-    # 2026-06-01 est en semaine 23 de 2026
-    assert nb_par_groupe[(2026, 23, "jambes")] == 2
+    resultat = lister_exercices_differents_par_groupe(seances)
+    assert resultat == {
+        "pectoraux": ["Développé couché"],
+        "jambes": ["Squat"],
+    }
+
+def test_calcul_du_1rm_est_juste():
+    seance = [
+        {
+            "date": "2026-06-24",
+            "duree": 90,
+            "exercices_realises": [
+                {"id_exercice": "DC01", "nom": "Développé couché", "groupe_musculaire": "pectoraux", "muscles_cibles": ["pec"], "type_materiel": "barre", "series": [
+                    {"numero_serie": 1, "poids": 90, "reps": 15, "est_echauffement": 0},
+                    {"numero_serie": 2, "poids": 110, "reps": 4, "est_echauffement": 0},
+                    {"numero_serie": 3, "poids": 90, "reps": 15, "est_echauffement": 1}
+                ]}
+            ]
+        }
+    ]
+    resultat = un_rm_estime_par_exercice(seance)
+    assert resultat == {"Développé couché": 135.0}
+
+
+def test_record_par_exercice_donne_le_bon_resultat():
+    seance = [
+        {
+            "date": "2026-06-24",
+            "duree": 90,
+            "exercices_realises": [
+                {"id_exercice": "DC01", "nom": "Développé couché", "groupe_musculaire": "pectoraux", "muscles_cibles": ["pec"], "type_materiel": "barre", "series": [
+                    {"numero_serie": 1, "poids": 90, "reps": 15, "est_echauffement": 0},
+                    {"numero_serie": 2, "poids": 110, "reps": 4, "est_echauffement": 0},
+                    {"numero_serie": 3, "poids": 300, "reps": 15, "est_echauffement": 1}
+                ]}
+            ]
+        }
+    ]
+    resultat = record_par_exercice("DC01", seance)
+    assert resultat == 110
+
+def test_volume_total_exercice_realise_prend_en_compte_halteres():
+    resultat1 = volume_total_exercice_realise({"id_exercice": "DC01", "nom": "Développé couché", "groupe_musculaire": "pectoraux", "muscles_cibles": ["pec"], "type_materiel": "barre", "series": [
+                    {"numero_serie": 1, "poids": 90, "reps": 15, "est_echauffement": 0},
+                    {"numero_serie": 2, "poids": 110, "reps": 4, "est_echauffement": 0},
+                    {"numero_serie": 3, "poids": 300, "reps": 15, "est_echauffement": 1}
+                ]})
+    resultat2 = volume_total_exercice_realise({"id_exercice": "DI01", "nom": "Développé incliné haltère", "groupe_musculaire": "pectoraux", "muscles_cibles": ["pec"], "type_materiel": "haltères", "series": [
+                    {"numero_serie": 1, "poids": 90, "reps": 15, "est_echauffement": 0},
+                    {"numero_serie": 2, "poids": 110, "reps": 4, "est_echauffement": 0},
+                    {"numero_serie": 3, "poids": 300, "reps": 15, "est_echauffement": 1}
+                ]})
+    assert resultat1 == 1790
+    assert resultat2 == 3580
