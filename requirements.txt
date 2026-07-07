@@ -1,2 +1,2 @@
-pytest
-pip freeze > requirements.txt
+SQLAlchemy==2.0.51
+pytest==7.3.1
