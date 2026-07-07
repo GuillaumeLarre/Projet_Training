@@ -1,4 +1,4 @@
-from fonctions_utiles.fonctions import verifier_date, demander_entier_positif
+from fonctions_utiles.fonctions import verifier_date, demander_entier_positif, sans_accents
 
 from constantes.constantes import GROUPES_MUSCULAIRES, MUSCLES_CIBLES,MATERIELS
 
@@ -11,14 +11,12 @@ from database.seances_repository import verifier_date_seance_existe, ajouter_ser
 import logging
 logger = logging.getLogger(__name__)
 
-import _sqlite3
-
 ##############################################################
 # Les fonctions répondant aux menus #
 
 def afficher_catalogue(catalogue) -> None:
     print(f"=== CATALOGUE DES EXERCICES ===\n")
-    for ligne in catalogue.values():
+    for ligne in sorted(catalogue.values(), key=lambda ligne: sans_accents(ligne['nom'])):
         print(f"[{ligne['id_exercice']}] {ligne['nom']} - {ligne['groupe_musculaire']} : {', '.join(ligne['muscles_cibles'])} ({ligne['type_materiel']})")
 
 def afficher_historique(conn) -> None:
@@ -165,7 +163,7 @@ def afficher_records(conn) -> None:
         print("Aucun exercice enregistré.")
         return
     print("Records par exercice :")
-    for id_ex in liste_ids:
+    for id_ex in sorted(liste_ids, key=lambda id_ex: sans_accents(catalogue[id_ex]["nom"])):
         nom = catalogue[id_ex]["nom"]
         record = record_par_exercice(id_ex, seances)
         print(f"{nom} :")
