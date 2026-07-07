@@ -10,21 +10,18 @@ from config_logging import configurer_logging
 
 from interface.interface import afficher_historique
 
-from database.schema import creer_tables
 from database.seances_repository import charger_toutes_les_seances_completes
-
+from database.engine import init_db, SessionLocal
 
 import logging
 logger = logging.getLogger(__name__)
 
-import sqlite3
+
 
 def lancer_application():
     logger.info("Démarrage de l'application")
-    with sqlite3.connect("musculation.db") as conn:
-        conn.execute("PRAGMA foreign_keys = ON")
-        conn.row_factory = sqlite3.Row
-        creer_tables(conn)
+    init_db()
+    with SessionLocal() as session:
         print("╔═══════════════════════════════════════╗")
         print("║  CARNET D'ENTRAÎNEMENT MUSCULATION    ║")
         print("╚═══════════════════════════════════════╝")
@@ -32,15 +29,15 @@ def lancer_application():
             afficher_menu()
             choix = input("Entre ton choix : ")
             if choix == "1":
-                saisir_seance(conn)
+                saisir_seance(session)
             elif choix == "2":
-                afficher_historique(conn)
+                afficher_historique(session)
             elif choix == "3":
-                lister_catalogue(conn)
+                lister_catalogue(session)
             elif choix == "4":
-                saisir_exercice(conn)
+                saisir_exercice(session)
             elif choix == "5":
-                seances = charger_toutes_les_seances_completes(conn)
+                seances = charger_toutes_les_seances_completes(session)
                 if not seances:
                     print("Aucune séance enregistrée")
                     continue
@@ -83,7 +80,7 @@ def lancer_application():
 
             elif choix == "6":
                 print(f"=== Evolution des charges dans le temps ===")
-                seances = charger_toutes_les_seances_completes(conn)
+                seances = charger_toutes_les_seances_completes(session)
                 resultat = evolution_des_charges_dans_le_temps(seances)
                 if not resultat:
                     print(f"Aucun exercice enregistré")
@@ -94,7 +91,7 @@ def lancer_application():
                         print(f"    {date_seance} : {charge:.1f} kg")
             elif choix == "7":
                 print(f"=== Exercices pratiqués par groupe ===")
-                seances = charger_toutes_les_seances_completes(conn)
+                seances = charger_toutes_les_seances_completes(session)
                 resultat = lister_exercices_differents_par_groupe(seances)
                 if not resultat:
                     print("Aucun exercice enregistré")
@@ -105,20 +102,20 @@ def lancer_application():
                         print(f"    -{nom}")
             elif choix == "8":
                 print(f"=== Mes records ===\n")
-                seances = charger_toutes_les_seances_completes(conn)
+                seances = charger_toutes_les_seances_completes(session)
                 if not seances:
                     print("Aucune séance enregistrée")
                     continue
-                afficher_records(conn)
+                afficher_records(session)
                 print()
                 print(f"=== Mes 1RM ===")
                 for nom, rm in sorted(un_rm_estime_par_exercice(seances).items()):
                     print(f"\n  {nom} :")
                     print(f"    {rm:.1f} kg")
             elif choix == "9":
-                supprimer_seances(conn)
+                supprimer_seances(session)
             elif choix == "10":
-                modifier_seance(conn)
+                modifier_seance(session)
             elif choix == "0":
                 print("À bientôt !")
                 logger.info("Fermeture de l'application")
