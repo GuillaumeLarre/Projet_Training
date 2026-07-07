@@ -6,7 +6,7 @@ from stats.stats import record_par_exercice, liste_exercices_pratiques, volume_t
 
 from database.exercices_repository import charger_catalogue, verifier_id_exercice_existe, verifier_nom_exercice_deja_utilise, ajouter_exercice
 
-from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete, supprimer_toutes_les_seances, lister_seances, charger_seance_complete, modifier_date_seance, modifier_duree_seance, charger_seance_par_date, ajouter_exercice_realise_a_seance, prochain_numero, verifier_exercice_deja_dans_seance, supprimer_exercice_realise, verifier_exercice_realise_existe, lister_exercices_realises_par_seance, lister_series_par_exercice_realise, verifier_serie_existe, modifier_echauffement_serie, modifier_poids_serie, modifier_reps_serie, supprimer_serie, supprimer_seance, charger_toutes_les_seances_completes
+from database.seances_repository import verifier_date_seance_existe, ajouter_serie, enregistrer_seance_complete, supprimer_toutes_les_seances, lister_seances, charger_seance_complete, modifier_date_seance, modifier_duree_seance, charger_seance_par_date, ajouter_exercice_realise_a_seance, prochain_numero, verifier_exercice_deja_dans_seance, supprimer_exercice_realise, lister_exercices_realises_par_seance, lister_series_par_exercice_realise, modifier_echauffement_serie, modifier_poids_serie, modifier_reps_serie, supprimer_serie, supprimer_seance, charger_toutes_les_seances_completes
 
 import logging
 logger = logging.getLogger(__name__)
@@ -19,8 +19,8 @@ def afficher_catalogue(catalogue) -> None:
     for ligne in sorted(catalogue.values(), key=lambda ligne: sans_accents(ligne['nom'])):
         print(f"[{ligne['id_exercice']}] {ligne['nom']} - {ligne['groupe_musculaire']} : {', '.join(ligne['muscles_cibles'])} ({ligne['type_materiel']})")
 
-def afficher_historique(conn) -> None:
-    seances = lister_seances(conn)
+def afficher_historique(session) -> None:
+    seances = lister_seances(session)
     if not seances:
         print("Aucune séance enregistrée")
         return
@@ -37,11 +37,11 @@ def afficher_historique(conn) -> None:
         if not saisie.isdigit():
             print("L'ID doit être composé de chiffres")
             continue
-        afficher_seance_detail(conn, int(saisie))
+        afficher_seance_detail(session, int(saisie))
         
 
-def afficher_seance_detail(conn, id_seance) -> None:
-    seance_complete = charger_seance_complete(conn, id_seance)
+def afficher_seance_detail(session, id_seance) -> None:
+    seance_complete = charger_seance_complete(session, id_seance)
     if seance_complete is None:
         print("Aucune séance trouvée avec cet ID")
         return
@@ -52,21 +52,21 @@ def afficher_seance_detail(conn, id_seance) -> None:
             mention = "(échauffement)" if serie['est_echauffement'] else ""
             print(f"{serie['numero_serie']}. {serie['poids']:.1f} kg - {serie['reps']} fois {mention}")
 
-def lister_catalogue(conn) -> None:
-    catalogue = charger_catalogue(conn)
+def lister_catalogue(session) -> None:
+    catalogue = charger_catalogue(session)
     if not catalogue:
         print("Catalogue vide")
         return
     afficher_catalogue(catalogue)
 
-def saisir_exercice(conn) -> None:
+def saisir_exercice(session) -> None:
     print(f"--- Ajout d'un exercice au catalogue ---")
     while True:
         id_exercice = input("Saisis un ID d'exercice (ex: 001): ").strip().upper()
         if not id_exercice:
             print("L'ID ne peut pas être vide ")
             continue
-        if verifier_id_exercice_existe(conn, id_exercice):
+        if verifier_id_exercice_existe(session, id_exercice):
             print(f"ID déjà pris")
             continue
         break
@@ -75,7 +75,7 @@ def saisir_exercice(conn) -> None:
         if not nom:
             print("Le nom ne peut pas être vide")
             continue
-        if verifier_nom_exercice_deja_utilise(conn, nom):
+        if verifier_nom_exercice_deja_utilise(session, nom):
             print("Nom déjà utilisé")
             continue
         break
@@ -104,18 +104,18 @@ def saisir_exercice(conn) -> None:
         if type_materiel in MATERIELS:
             break
         print("Matériel invalide") 
-    ajouter_exercice(conn, id_exercice, nom, groupe_musculaire, type_materiel, liste_muscles_cibles)
+    ajouter_exercice(session, id_exercice, nom, groupe_musculaire, type_materiel, liste_muscles_cibles)
     print(f"Exercice ajouté : [{id_exercice}] {nom}")
  
-def saisir_seance(conn) -> None:
-    catalogue = charger_catalogue(conn)
+def saisir_seance(session) -> None:
+    catalogue = charger_catalogue(session)
     if not catalogue:
         print("Catalogue vide")
         return
     while True:
         date = input("Saisie une date : ")
         if verifier_date(date):
-            if verifier_date_seance_existe(conn, date):
+            if verifier_date_seance_existe(session, date):
                 print("Une séance existe déjà à cette date")
                 continue
             break
@@ -147,18 +147,18 @@ def saisir_seance(conn) -> None:
         print("Séance annulée car aucun exercice valide n'a été saisi")
         return
     dict_seance = {"date": date, "duree": duree, "exercices_realises": liste_exercices_realises}
-    id_seance = enregistrer_seance_complete(conn, dict_seance)
+    id_seance = enregistrer_seance_complete(session, dict_seance)
     print("Séance enregistrée")
     logger.info(f"Nouvelle séance saisie : {date}")
     print("\n=== Volume par groupe musculaire ===")
-    seance = charger_seance_complete(conn, id_seance)
+    seance = charger_seance_complete(session, id_seance)
     for groupe, volume in volume_total_par_groupe_musculaire_seance(seance).items():
         print(f"  {groupe:15s} : {volume:.1f}")
     
-def afficher_records(conn) -> None:
-    seances = charger_toutes_les_seances_completes(conn)
+def afficher_records(session) -> None:
+    seances = charger_toutes_les_seances_completes(session)
     liste_ids = liste_exercices_pratiques(seances)
-    catalogue = charger_catalogue(conn)
+    catalogue = charger_catalogue(session)
     if not liste_ids:
         print("Aucun exercice enregistré.")
         return
@@ -169,7 +169,7 @@ def afficher_records(conn) -> None:
         print(f"{nom} :")
         print(f"    {record:.1f} kg")
 
-def supprimer_seances(conn) -> None:
+def supprimer_seances(session) -> None:
     print("⚠️ Attention la suppression est définitive")
     while True:
         saisie = input("Confirmez-vous la suppression de toutes les séances ?")
@@ -177,17 +177,17 @@ def supprimer_seances(conn) -> None:
             print("Suppression annulée")
             break
         elif saisie.strip().lower() == "oui":
-            supprimer_toutes_les_seances(conn)
+            supprimer_toutes_les_seances(session)
             print("Toutes les séances ont été supprimées")
             break
         else:
             print("Réponse invalide, tape 'oui' ou 'non' ")
 
-def modifier_seance(conn) -> None:
+def modifier_seance(session) -> None:
     while True:
         date_seance = input("Saisie une date : ")
         if verifier_date(date_seance):
-            seance = charger_seance_par_date(conn, date_seance)
+            seance = charger_seance_par_date(session, date_seance)
             if seance is None:
                 print("Aucune séance effectuée à cette date")
                 continue
@@ -204,10 +204,10 @@ def modifier_seance(conn) -> None:
             while True:
                 saisie_nouvelle_date = input("Entre la nouvelle date ")
                 if verifier_date(saisie_nouvelle_date):
-                    if verifier_date_seance_existe(conn, saisie_nouvelle_date):
+                    if verifier_date_seance_existe(session, saisie_nouvelle_date):
                         print("Date de séance déjà enregistrée ")
                     else:
-                        modifier_date_seance(conn, seance['id_seance'], saisie_nouvelle_date)
+                        modifier_date_seance(session, seance['id_seance'], saisie_nouvelle_date)
                         print("Date modifiée ")
                         break
                 else:
@@ -215,30 +215,30 @@ def modifier_seance(conn) -> None:
 
         elif saisie_choix == "2":
             saisie_duree = demander_entier_positif("Saisie la nouvelle durée ")
-            modifier_duree_seance(conn, seance["id_seance"], saisie_duree)
+            modifier_duree_seance(session, seance["id_seance"], saisie_duree)
             print("Durée modifiée")
 
         elif saisie_choix == "3":
-            lister_catalogue(conn)
+            lister_catalogue(session)
             id_exercice = input("Saisie l'id de l'exercice : ").strip().upper()
-            if not verifier_id_exercice_existe(conn, id_exercice):
+            if not verifier_id_exercice_existe(session, id_exercice):
                 print("Exercice inconnu")
                 continue
-            if verifier_exercice_deja_dans_seance(conn, seance["id_seance"], id_exercice):
+            if verifier_exercice_deja_dans_seance(session, seance["id_seance"], id_exercice):
                 print("Exercice déjà dans la séance")
                 continue
             liste_series = saisir_series()
             if not liste_series:
                 print("Aucune série ajouté, annulation de l'ajout d'exercice")
                 continue
-            id_exercice_realise = ajouter_exercice_realise_a_seance(conn, seance["id_seance"], id_exercice)
+            id_exercice_realise = ajouter_exercice_realise_a_seance(session, seance["id_seance"], id_exercice)
             print("Exercice ajouté ")
             for position, serie in enumerate(liste_series, start=1):
-                ajouter_serie(conn, position, serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
+                ajouter_serie(session, position, serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
 
 
         elif saisie_choix == "4":
-            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance["id_seance"])
+            id_exercice_realise = choisir_exercice_realise_dans_seance(session, seance["id_seance"])
             if id_exercice_realise is None:
                 continue
             print("⚠️ Attention la suppression est définitive")
@@ -248,17 +248,17 @@ def modifier_seance(conn) -> None:
                     print("Suppression annulée")
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
-                    supprimer_exercice_realise(conn, id_exercice_realise)
+                    supprimer_exercice_realise(session, id_exercice_realise)
                     print("L'exercice a été supprimé")
                     break
                 else:
                     print("Réponse invalide, tape 'oui' ou 'non'")
 
         elif saisie_choix == "5":
-            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance["id_seance"])
+            id_exercice_realise = choisir_exercice_realise_dans_seance(session, seance["id_seance"])
             if id_exercice_realise is None:
                 continue
-            id_serie = choisir_id_serie(conn, id_exercice_realise)
+            id_serie = choisir_id_serie(session, id_exercice_realise)
             if id_serie is None:
                 continue
             afficher_sous_menu_modification_serie()
@@ -278,14 +278,14 @@ def modifier_seance(conn) -> None:
                     except ValueError:
                         print("Poids invalide ")
                         continue
-                modifier_poids_serie(conn, id_serie, nouveau_poids)
+                modifier_poids_serie(session, id_serie, nouveau_poids)
                 print("Poids modifié ")
-                afficher_serie_apres_modification(conn, id_serie, id_exercice_realise)
+                afficher_serie_apres_modification(session, id_serie, id_exercice_realise)
             elif saisie == "2":
                 nouvelles_reps = demander_entier_positif("Reps effectuées : ")
-                modifier_reps_serie(conn, id_serie, nouvelles_reps)
+                modifier_reps_serie(session, id_serie, nouvelles_reps)
                 print("Nouvelles répétitions enregistrées ")
-                afficher_serie_apres_modification(conn, id_serie, id_exercice_realise)
+                afficher_serie_apres_modification(session, id_serie, id_exercice_realise)
             elif saisie == "3":
                 while True:
                     demande_echauffement = input("S'agit il d'une série d'échauffement ? (o/n)")
@@ -297,14 +297,14 @@ def modifier_seance(conn) -> None:
                         break
                     else:
                         print("Entre une valeur valide (o/n)")
-                modifier_echauffement_serie(conn, id_serie, nouvel_echauffement)
+                modifier_echauffement_serie(session, id_serie, nouvel_echauffement)
                 print("Echauffement modifié ")
-                afficher_serie_apres_modification(conn, id_serie, id_exercice_realise)
+                afficher_serie_apres_modification(session, id_serie, id_exercice_realise)
             elif saisie == "0":
                 continue
  
         elif saisie_choix == "6":
-            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance['id_seance'])
+            id_exercice_realise = choisir_exercice_realise_dans_seance(session, seance['id_seance'])
             if id_exercice_realise is None:
                 continue
             liste_series = saisir_series()
@@ -312,15 +312,15 @@ def modifier_seance(conn) -> None:
                 print("Aucune série ajoutée")
                 continue
             for serie in liste_series:
-                num_serie = prochain_numero(conn, id_exercice_realise)
-                ajouter_serie(conn, num_serie,serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
+                num_serie = prochain_numero(session, id_exercice_realise)
+                ajouter_serie(session, num_serie,serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
             print(f"{len(liste_series)} série(s) ajoutée(s)")
 
         elif saisie_choix == "7":
-            id_exercice_realise = choisir_exercice_realise_dans_seance(conn, seance["id_seance"])
+            id_exercice_realise = choisir_exercice_realise_dans_seance(session, seance["id_seance"])
             if id_exercice_realise is None:
                 continue
-            id_serie = choisir_id_serie(conn, id_exercice_realise)
+            id_serie = choisir_id_serie(session, id_exercice_realise)
             if id_serie is None:
                 continue
             print("⚠️ Attention la suppression est définitive")
@@ -330,7 +330,7 @@ def modifier_seance(conn) -> None:
                     print("Suppression annulée")
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
-                    supprimer_serie(conn, id_serie)
+                    supprimer_serie(session, id_serie)
                     print("Série supprimée")
                     break
                 else: 
@@ -344,7 +344,7 @@ def modifier_seance(conn) -> None:
                     print("Suppression annulée")
                     break
                 elif saisie.strip().lower() in ("oui", "o"):
-                    supprimer_seance(conn, seance["id_seance"])
+                    supprimer_seance(session, seance["id_seance"])
                     print("La séance a été supprimée")
                     return
                 else: 
@@ -386,8 +386,8 @@ def saisir_series() -> list:
     return liste_series
             
     
-def choisir_exercice_realise_dans_seance(conn, id_seance) -> int | None:
-    liste_exercices_realises = lister_exercices_realises_par_seance(conn, id_seance)
+def choisir_exercice_realise_dans_seance(session, id_seance) -> int | None:
+    liste_exercices_realises = lister_exercices_realises_par_seance(session, id_seance)
     if not liste_exercices_realises:
         print("Aucun exercice réalisé dans cette séance")
         return None
@@ -408,8 +408,8 @@ def choisir_exercice_realise_dans_seance(conn, id_seance) -> int | None:
             continue
         return id_choisi
         
-def choisir_id_serie(conn, id_exercice_realise) -> int | None:
-    liste_series_exercice_realise = lister_series_par_exercice_realise(conn, id_exercice_realise)
+def choisir_id_serie(session, id_exercice_realise) -> int | None:
+    liste_series_exercice_realise = lister_series_par_exercice_realise(session, id_exercice_realise)
     if len(liste_series_exercice_realise) == 0:
         print("Aucune série enregistrée sur cet exercice ")
         return None
@@ -427,8 +427,8 @@ def choisir_id_serie(conn, id_exercice_realise) -> int | None:
         else:
             print("Numéro de série invalide ")
 
-def afficher_serie_apres_modification(conn, id_serie, id_exercice_realise) -> None:
-    series = lister_series_par_exercice_realise(conn, id_exercice_realise)
+def afficher_serie_apres_modification(session, id_serie, id_exercice_realise) -> None:
+    series = lister_series_par_exercice_realise(session, id_exercice_realise)
     for serie in series:
         if serie["id_serie"] == id_serie:
             echauffement = " (échauffement)" if serie["est_echauffement"] else ""

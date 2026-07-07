@@ -200,25 +200,6 @@ def enregistrer_seance_complete(session, dict_seance) -> int:
     session.commit()
     return id_seance
 
-    # cursor = conn.cursor()
-    # cursor.execute(
-    #     "INSERT INTO seances (date, duree) VALUES (?, ?)", (dict_seance["date"], dict_seance["duree"])
-    # )
-    # id_seance = cursor.lastrowid
-    # exercices_realises = dict_seance["exercices_realises"]
-    # for exo_realise in exercices_realises:
-    #     cursor.execute(
-    #         "INSERT INTO exercices_realises (id_exercice, id_seance) VALUES (?, ?)", (exo_realise["id_exercice"], id_seance)
-    #     )
-    #     id_exercice_realise = cursor.lastrowid
-    #     series = exo_realise["series"]
-    #     for position, serie in enumerate(series, start=1):
-    #         cursor.execute(
-    #             "INSERT INTO series (numero_serie, poids, reps, est_echauffement, id_exercice_realise) VALUES (?, ?, ?, ?, ?)", (position, serie["poids"], serie["reps"], serie["est_echauffement"], id_exercice_realise)
-    #         )
-    # conn.commit()
-    # return id_seance
-
 def prochain_numero(session, id_exercice_realise) -> int:
     stmt = select(func.max(Serie.numero_serie)).where(Serie.id_exercice_realise == id_exercice_realise)
     valeur_max = session.execute(stmt).scalar()
