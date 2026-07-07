@@ -1,19 +1,23 @@
 import pytest
-import sqlite3
-from database.schema import creer_tables
 from database.exercices_repository import ajouter_exercice
+from sqlalchemy import create_engine, event
+from sqlalchemy.orm import Session
+from database.models import Base
 
 @pytest.fixture
-def conn():
-    conn = sqlite3.connect(":memory:")
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.row_factory = sqlite3.Row
-    creer_tables(conn)
-    yield conn
-    conn.close()
+def session():
+    engine_test = create_engine("sqlite:///:memory:")
+    @event.listens_for(engine_test, "connect")
+    def _enable_fk(dbapi_connection, connection_record):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON")
+        cursor.close()
+    Base.metadata.create_all(engine_test)
+    with Session(engine_test) as session:
+        yield session
 
 @pytest.fixture
-def conn_avec_catalogue(conn):
-    ajouter_exercice(conn, "DC01", "Développé couché haltères", "pectoraux", "haltères", ["portion médiane des pecs", "triceps", "deltoide antérieur"])
-    ajouter_exercice(conn, "DI01", "Développé incliné haltères", "pectoraux", "haltères", ["portion supérieure des pecs", "deltoide antérieur", "triceps"])
-    yield conn
+def session_avec_catalogue(session):
+    ajouter_exercice(session, "DC01", "Développé couché haltères", "pectoraux", "haltères", ["portion médiane des pecs", "triceps", "deltoide antérieur"])
+    ajouter_exercice(session, "DI01", "Développé incliné haltères", "pectoraux", "haltères", ["portion supérieure des pecs", "deltoide antérieur", "triceps"])
+    yield session
