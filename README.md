@@ -2,7 +2,7 @@
 
 Application Python en ligne de commande pour suivre ses séances de musculation, analyser sa progression et comparer ses volumes hebdomadaires à des fourchettes de référence.
 
-Projet personnel développé pour mettre en pratique une architecture en couches, SQLite avec le module `sqlite3`, le pattern Repository, les tests automatisés, les annotations de types et les bonnes pratiques de développement Python.
+Projet personnel développé pour mettre en pratique une architecture en couches, une base `SQLite` pilotée par l'ORM `SQLAlchemy`, le pattern Repository, les tests automatisés, les annotations de types et les bonnes pratiques de développement Python.
 
 ---
 
@@ -48,7 +48,8 @@ Projet personnel développé pour mettre en pratique une architecture en couches
 Projet_Training/
 
 ├── database/
-│   ├── schema.py                 # Création du schéma SQLite
+│   ├── engine.py                 # Création de l'engine
+│   ├── models.py                 # Création des classes ORM
 │   ├── exercices_repository.py   # Accès base pour le catalogue d'exercices
 │   └── seances_repository.py     # Accès base pour les séances, exercices réalisés et séries
 │
@@ -64,13 +65,6 @@ Projet_Training/
 ├── fonctions_utiles/
 │   └── fonctions.py              # Helpers : validation de date, accord, saisies contrôlées
 │
-├── models/                       # Ancienne architecture POO, conservée pour référence
-│   ├── Serie.py
-│   ├── Exercice.py
-│   ├── ExerciceRealise.py
-│   ├── Seance.py
-│   └── CarnetEntrainement.py
-│
 ├── tests/
 │   ├── test_exercices_repository.py
 │   ├── test_seances_repository.py
@@ -84,7 +78,7 @@ Projet_Training/
 
 L'application est organisée en couches :
 
-* `database/` isole tout le SQL grâce au pattern Repository ;
+* `database/` isole l'accès aux données via l'ORM SQLAlchemy et le pattern Repository ;
 * `interface/` gère l'orchestration, les menus et les saisies utilisateur ;
 * `stats/` contient la logique d'analyse et de calcul ;
 * `constantes/` centralise les listes de référence utilisées par l'application.
@@ -147,7 +141,6 @@ pytest
 
 Les tests couvrent notamment :
 
-* la création du schéma SQLite ;
 * le repository des exercices ;
 * le repository des séances ;
 * les ajouts, modifications et suppressions ;
@@ -160,7 +153,7 @@ Les tests couvrent notamment :
 
 * **Python 3.11+**
 * **SQLite**
-* **sqlite3**
+* **SQLAlchemy 2.0.51**
 * **pytest**
 * **Logging**
 * **Annotations de types** avec la syntaxe moderne Python
@@ -170,18 +163,16 @@ Les tests couvrent notamment :
 
 ## Roadmap
 
-## Roadmap
-
 * [x] Architecture POO initiale
 * [x] Stats d'entraînement complètes
 * [x] Modification et suppression de séances individuelles
 * [x] Type hints sur la base de code
 * [x] Logging structuré
 * [x] Migration vers SQLite avec `sqlite3`
-* [x] Pattern Repository pour isoler le SQL
+* [x] Pattern Repository pour isoler l'accès aux données
 * [x] Contraintes d'intégrité SQL et suppressions en cascade
 * [x] Suite de tests pytest avec fixtures et base en mémoire
-* [ ] Refactorisation des repositories vers SQLAlchemy (ORM)
+* [x] Refactorisation des repositories vers SQLAlchemy (ORM)
 * [ ] Exposition de l'application via une API Flask ou FastAPI
 * [ ] Frontend HTML/CSS responsive
 * [ ] Progressive Web App (PWA) installable sur mobile
@@ -193,15 +184,17 @@ Les tests couvrent notamment :
 
 Ce projet a été l'occasion d'expérimenter plusieurs décisions d'architecture significatives :
 
-* **Pattern Repository** : les accès à la base sont isolés dans `database/`, ce qui sépare le SQL du reste du code. Cette séparation rend la migration future vers SQLAlchemy possible sans toucher à la logique métier ni à l'interface.
+* **Pattern Repository** : les accès à la base sont isolés dans `database/`, ce qui sépare l'accès aux données du reste du code. Cette séparation a rendu la migration vers SQLAlchemy possible sans toucher à la logique métier ni à l'interface (ce qui s'est vérifié : les 18 tests sont passés sans modification).
 
-* **Cascade SQL plutôt que cascade Python** : les suppressions imbriquées (séance → exercices réalisés → séries) sont déclarées au niveau du schéma avec `ON DELETE CASCADE`. Avantage : ajouter une nouvelle table enfant n'oblige pas à modifier les fonctions de suppression existantes, la règle est portée par la FK elle-même.
+* **Cascade SQL plutôt que cascade Python** : les suppressions imbriquées (séance → exercices réalisés → séries) sont  déclarées au niveau des modèles ORM (ondelete="CASCADE") et appliquées par SQLite via les clés étrangères. Avantage : ajouter une nouvelle table enfant n'oblige pas à modifier les fonctions de suppression existantes, la règle est portée par la FK elle-même.
 
 * **Stats sur dicts plutôt que sur objets** : les fonctions d'analyse ont été refactorisées pour opérer sur les données brutes retournées par les repositories (listes de dicts) au lieu d'un arbre d'objets en mémoire. Cette approche est cohérente avec une future migration vers une architecture web, où chaque requête HTTP est isolée et ne maintient pas d'état global.
 
 * **Tests avec fixtures pytest et base SQLite en mémoire** : chaque test reçoit une base fraîche grâce à une fixture, ce qui garantit l'isolation et la rapidité (les 18 tests s'exécutent en moins de 100 ms). Cette approche permet de tester des comportements complexes (contraintes, cascades) sans nécessiter de configuration externe.
 
 * **Atomicité des opérations métier** : la fonction `enregistrer_seance_complete` regroupe en une seule transaction l'enregistrement d'une séance, de ses exercices et de ses séries. Cela évite de laisser des données partielles en base en cas d'interruption.
+
+* **Migration vers SQLAlchemy 2.x (ORM)** : les repositories, initialement écrits en sqlite3 pur, ont été réécrits avec l'ORM SQLAlchemy en préservant les mêmes signatures et formes de sortie (dicts), ce qui a permis de ne toucher ni à l'interface, ni aux stats, ni à la logique des tests. Points techniques notables : gestion des identifiants auto-générés en cascade via flush(), injection de la session en argument des fonctions (testabilité), et base de test isolée en mémoire.
 
 ## Auteur
 
