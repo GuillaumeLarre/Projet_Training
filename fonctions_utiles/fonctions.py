@@ -1,4 +1,10 @@
 from datetime import datetime
+import unicodedata
+
+def sans_accents(texte):
+    caractere = unicodedata.normalize("NFD", texte)
+    nouveau_texte = "".join(c for c in caractere if unicodedata.combining(c) == 0)
+    return nouveau_texte
 
 def accord(quantite: int, singulier: str, pluriel: str) -> str:
     if quantite <= 1:

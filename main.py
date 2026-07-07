@@ -1,6 +1,6 @@
 from interface.interface import (afficher_menu, saisir_seance, afficher_records, saisir_exercice, lister_catalogue, supprimer_seances, modifier_seance)
 
-from fonctions_utiles.fonctions import accord
+from fonctions_utiles.fonctions import accord, sans_accents
 
 from datetime import date
 
@@ -52,11 +52,11 @@ def lancer_application():
                 if not series_groupe_semaine_en_cours:
                     print("Aucune séance cette semaine")
                     continue
-                for cle, valeur in sorted(series_groupe_semaine_en_cours.items()):
+                for cle, valeur in sorted(series_groupe_semaine_en_cours.items(), key=lambda p: (p[0][0], p[0][1], sans_accents(p[0][2]))):
                     print(f"- {cle[2]} : {valeur} {accord(valeur, 'série', 'séries')}")
                 print()
                 print(f"--- Nombre de séries par muscle ---\n")
-                for cle, valeur in sorted(series_muscle_semaine_en_cours.items()):
+                for cle, valeur in sorted(series_muscle_semaine_en_cours.items(), key=lambda p: (p[0][0], p[0][1], sans_accents(p[0][2]))):
                     print(f"- {cle[2]} : {valeur} {accord(valeur, 'série', 'séries')}")
                 print()
                 print(f"=== Fréquence d'entraînement ===\n")
@@ -64,17 +64,17 @@ def lancer_application():
                 frequence_par_groupe_semaine_en_cours = {cle: valeur for cle, valeur in frequence_par_groupe.items() if cle[0] == annee and cle[1] == num_semaine}
                 frequence_par_muscle_semaine_en_cours = {cle: valeur for cle, valeur in frequence_par_muscle.items() if cle[0] == annee and cle[1] == num_semaine}
                 print(f"--- Fréquence par groupe ---\n")
-                for cle, valeur in sorted(frequence_par_groupe_semaine_en_cours.items()):
+                for cle, valeur in sorted(frequence_par_groupe_semaine_en_cours.items(), key=lambda p: (p[0][0], p[0][1], sans_accents(p[0][2]))):
                     print(f"-{cle[2]} : {valeur} fois")
                 print()
                 print(f"--- Fréquence par muscle ---\n")
-                for cle, valeur in sorted(frequence_par_muscle_semaine_en_cours.items()):
+                for cle, valeur in sorted(frequence_par_muscle_semaine_en_cours.items(), key=lambda p: (p[0][0], p[0][1], sans_accents(p[0][2]))):
                     print(f"- {cle[2]} : {valeur} fois")
                 print()
                 print(f"=== Comparaison aux fourchettes scientifiques ===\n")
                 comparaison_fourchette_scientifique = comparaison_nb_series_par_groupe_et_fourchette_scientifique(seances)
                 comparaison_fourchette_scientifique_semaine_en_cours = {cle: valeur for cle, valeur in comparaison_fourchette_scientifique.items() if cle[0] == annee and cle[1] == num_semaine}
-                for cle, donnees in sorted(comparaison_fourchette_scientifique_semaine_en_cours.items()):
+                for cle, donnees in sorted(comparaison_fourchette_scientifique_semaine_en_cours.items(), key=lambda p: (p[0][0], p[0][1], sans_accents(p[0][2]))):
                     print(f"- {cle[2]} : {donnees['nb_series']} {accord(donnees['nb_series'], 'série', 'séries')} | {donnees['statut']}")
                 print()
 
@@ -85,7 +85,7 @@ def lancer_application():
                 if not resultat:
                     print(f"Aucun exercice enregistré")
                     continue
-                for nom, liste in sorted(resultat.items()):
+                for nom, liste in sorted(resultat.items(), key=lambda p: sans_accents(p[0])):
                     print(f"\n  {nom} :")
                     for date_seance, charge in liste:
                         print(f"    {date_seance} : {charge:.1f} kg")
@@ -96,7 +96,7 @@ def lancer_application():
                 if not resultat:
                     print("Aucun exercice enregistré")
                     continue
-                for groupe, liste in sorted(resultat.items()):
+                for groupe, liste in sorted(resultat.items(), key=lambda p: sans_accents(p[0])):
                     print(f"\n  {groupe} :")
                     for nom in liste:
                         print(f"    -{nom}")
@@ -109,7 +109,7 @@ def lancer_application():
                 afficher_records(session)
                 print()
                 print(f"=== Mes 1RM ===")
-                for nom, rm in sorted(un_rm_estime_par_exercice(seances).items()):
+                for nom, rm in sorted(un_rm_estime_par_exercice(seances).items(), key=lambda p: sans_accents(p[0])):
                     print(f"\n  {nom} :")
                     print(f"    {rm:.1f} kg")
             elif choix == "9":
