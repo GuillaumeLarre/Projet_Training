@@ -1,41 +1,29 @@
-def ajouter_exercice(conn, id_exercice, nom, groupe_musculaire, type_materiel, muscles_cibles) -> None:
-    cursor = conn.cursor()
-    cursor.execute(
-        "INSERT INTO exercices (id_exercice, nom, groupe_musculaire, type_materiel) VALUES (?, ?, ?, ?)", (id_exercice, nom, groupe_musculaire, type_materiel)
-    )
-    lignes_muscles = [(id_exercice, m) for m in muscles_cibles]
-    cursor.executemany(
-        "INSERT INTO muscles_cibles_exercices (id_exercice, nom_muscle) VALUES (?, ?)", lignes_muscles
-    )
-    conn.commit()
+from sqlalchemy import select
+from database.models import Exercice, MuscleCibleExercice
 
-def charger_catalogue(conn) -> dict:
-    cursor = conn.cursor()
+def ajouter_exercice(session, id_exercice, nom, groupe_musculaire, type_materiel, muscles_cibles) -> None:
+    session.add(Exercice(id_exercice=id_exercice, nom=nom, groupe_musculaire=groupe_musculaire, type_materiel=type_materiel))
+    for muscle in muscles_cibles:
+        session.add(MuscleCibleExercice(id_exercice=id_exercice, nom_muscle=muscle))
+    session.commit()
+
+def charger_catalogue(session) -> dict:
     catalogue = {}
-    cursor.execute(
-        "SELECT e.id_exercice, e.nom, e.groupe_musculaire, e.type_materiel, m.nom_muscle FROM exercices e JOIN muscles_cibles_exercices m ON m.id_exercice = e.id_exercice"
-    )
-    exercices = cursor.fetchall()
-    for ligne in exercices:
-        id_ex = ligne["id_exercice"]
-        if id_ex not in catalogue:
-            catalogue[id_ex] = {"id_exercice": id_ex, "nom": ligne["nom"], "groupe_musculaire": ligne["groupe_musculaire"], "type_materiel": ligne["type_materiel"], "muscles_cibles": []}
-        catalogue[id_ex]["muscles_cibles"].append(ligne["nom_muscle"])
+    stmt = (select(Exercice, MuscleCibleExercice)
+            .join(MuscleCibleExercice, MuscleCibleExercice.id_exercice == Exercice.id_exercice))
+    for exercice, muscle_cible in session.execute(stmt).all():
+        id_exercice = exercice.id_exercice
+        if id_exercice not in catalogue:
+            catalogue[id_exercice] = {"id_exercice": id_exercice, "nom": exercice.nom, "groupe_musculaire": exercice.groupe_musculaire, "type_materiel": exercice.type_materiel, "muscles_cibles": []}
+        catalogue[id_exercice]["muscles_cibles"].append(muscle_cible.nom_muscle)
     return catalogue
 
-def verifier_id_exercice_existe(conn, id_exercice) -> bool:
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT id_exercice FROM exercices WHERE id_exercice = ?", (id_exercice,)
-    )
-    resultat = cursor.fetchone()
+def verifier_nom_exercice_deja_utilise(session, nom) -> bool:
+    stmt = select(Exercice).where(Exercice.nom == nom)
+    resultat = session.scalars(stmt).first()
     return resultat is not None
-    
-def verifier_nom_exercice_deja_utilise(conn, nom) -> bool:
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT nom FROM exercices WHERE nom = ?", (nom,)
-    )
-    resultat = cursor.fetchone()
+
+def verifier_id_exercice_existe(session, id_exercice) -> bool:
+    stmt = select(Exercice).where(Exercice.id_exercice == id_exercice)
+    resultat = session.scalars(stmt).first()
     return resultat is not None
-    

@@ -1,6 +1,6 @@
 from database.seances_repository import verifier_date_seance_existe, enregistrer_seance_complete
 from database.exercices_repository import charger_catalogue
-import sqlite3
+from database.engine import init_db, SessionLocal
 
 def exo(id_exercice, *series_tuples):
     """Construit le dict d'un exercice réalisé à partir de tuples (poids, reps)."""
@@ -10,10 +10,9 @@ def exo(id_exercice, *series_tuples):
     }
 
 def ajouter_seances():
-    with sqlite3.connect("musculation.db") as conn:
-        conn.execute("PRAGMA foreign_keys = ON")
-        conn.row_factory = sqlite3.Row
-        catalogue = charger_catalogue(conn) 
+    init_db()
+    with SessionLocal() as session:
+        catalogue = charger_catalogue(session) 
         if not catalogue:
             print("⚠️  Le catalogue est vide. Lance d'abord seed.py.")
             return
@@ -84,10 +83,10 @@ def ajouter_seances():
     ]
         nb_ajoutees = 0
         for seance in seances:
-            if verifier_date_seance_existe(conn, seance["date"]):
+            if verifier_date_seance_existe(session, seance["date"]):
                 print(f"⚠️ Séance déjà existante pour le {seance['date']}, ignorée.")
                 continue
-            enregistrer_seance_complete(conn, seance)
+            enregistrer_seance_complete(session, seance)
             nb_ajoutees += 1
         
         print(f"{nb_ajoutees} séance(s) ajoutée(s).")
